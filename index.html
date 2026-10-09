@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wochenplan+">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Wochenplan+</title>
+<style>
+html{touch-action:manipulation;-webkit-text-size-adjust:100%}
+:root{
+  --bg:#09090b;--s1:#131316;--s2:#1a1a1f;--s3:#222228;--line:#2a2a32;
+  --text:#f4f4f5;--muted:#71717a;--faint:#52525b;
+  --blue:#60a5fa;--teal:#2dd4bf;--green:#4ade80;--red:#f87171;
+  --orange:#fb923c;--purple:#c084fc;--yellow:#fbbf24;
+  --safe:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;display:flex;flex-direction:column;max-width:440px;margin:0 auto;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.top{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px;position:sticky;top:0;z-index:20;background:linear-gradient(var(--bg) 70%,transparent)}
+.top h1{font-size:20px;font-weight:700;letter-spacing:-.4px}
+.top .sub{font-size:12px;color:var(--muted);margin-top:1px}
+.ibtn{width:36px;height:36px;border-radius:10px;border:none;background:var(--s2);color:var(--muted);font-size:15px;display:grid;place-items:center;cursor:pointer}
+.view{display:none;flex-direction:column;flex:1;padding-bottom:92px}
+.view.active{display:flex}
+.hero{margin:4px 14px 12px;border-radius:18px;padding:18px 16px 16px;position:relative;overflow:hidden}
+.hero.time{background:linear-gradient(155deg,#12182a,#0e1018);border:1px solid #1c2438}
+.hero.budget{background:linear-gradient(155deg,#0e1c1a,#0c1210);border:1px solid #1a2c28}
+.hero::after{content:"";position:absolute;top:-40%;right:-25%;width:180px;height:180px;border-radius:50%;pointer-events:none}
+.hero.time::after{background:radial-gradient(circle,rgba(96,165,250,.12),transparent 70%)}
+.hero.budget::after{background:radial-gradient(circle,rgba(45,212,191,.1),transparent 70%)}
+.status-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:500}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.dot.run{background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.5s infinite}
+.dot.pause{background:var(--orange);box-shadow:0 0 6px var(--orange)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.hero-num{font-size:40px;font-weight:760;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;line-height:1.05;margin-bottom:6px}
+.hero-meta{font-size:13px;color:var(--muted);line-height:1.55}
+.hero-meta b{color:var(--text);font-weight:600}
+.btns{display:grid;gap:8px;margin-top:14px}
+.btns.g2{grid-template-columns:1fr 1fr}
+.btns.g3{grid-template-columns:1fr 1fr 1fr}
+.btn{border:none;border-radius:12px;padding:13px 8px;font-size:13.5px;font-weight:650;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:transform .1s}
+.btn:active{transform:scale(.97)}
+.btn-blue{background:var(--blue);color:#0a0a0c}
+.btn-teal{background:var(--teal);color:#042f2e}
+.btn-green{background:#16a34a;color:#fff}
+.btn-orange{background:#c2410c;color:#fff}
+.btn-red{background:#b91c1c;color:#fff}
+.btn-soft{background:var(--s2);color:var(--text);border:1px solid var(--line)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 14px 14px}
+.kpi{background:var(--s1);border-radius:12px;padding:12px 8px;text-align:center}
+.kpi .l{font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:500;letter-spacing:.2px}
+.kpi .v{font-size:16px;font-weight:720;font-variant-numeric:tabular-nums}
+.kpi .v.up{color:var(--green)}.kpi .v.dn{color:var(--red)}
+.sec{padding:0 14px 18px}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
+.sec-h h2{font-size:11px;font-weight:650;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.sec-h .lnk{font-size:12px;color:var(--blue);font-weight:500;cursor:pointer;border:none;background:none}
+.list{display:flex;flex-direction:column;gap:7px}
+.item{background:var(--s1);border-radius:13px;padding:12px 13px;display:flex;align-items:center;gap:11px}
+.ico{width:36px;height:36px;border-radius:10px;background:var(--s2);display:grid;place-items:center;font-size:15px;flex-shrink:0}
+.info{flex:1;min-width:0}
+.info .t{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.info .s{font-size:11.5px;color:var(--muted);margin-top:2px}
+.val{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0}
+.xbtn{background:var(--s3);border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:15px;min-width:36px;min-height:36px;padding:6px 10px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.xbtn:active{background:var(--red);color:#fff;border-color:var(--red)}
+.days{display:flex;gap:5px;padding:0 14px 12px}
+.dtab{flex:1;height:50px;border-radius:11px;background:var(--s1);border:1.5px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:11px;color:var(--muted);cursor:pointer;position:relative;font-weight:500}
+.dtab .n{font-size:13px;font-weight:720}
+.dtab.on{border-color:var(--teal);color:var(--text);background:#0c1f1c}
+.dtab.today::after{content:"";position:absolute;bottom:4px;width:3.5px;height:3.5px;border-radius:50%;background:var(--teal)}
+.dtab.hot{color:var(--red)}
+.panel{background:var(--s1);border-radius:14px;padding:14px}
+.fld{margin-bottom:10px}
+.fld label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.fld input,.fld select{width:100%;background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;color:var(--text);font-size:15px;outline:none}
+.fld input:focus,.fld select:focus{border-color:var(--blue)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.qbtns{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.qbtns button{background:var(--s2);border:1px solid var(--line);border-radius:9px;padding:10px 0;color:var(--text);font-size:13px;font-weight:650;cursor:pointer}
+.bar{height:5px;background:var(--s2);border-radius:99px;overflow:hidden;margin-top:10px}
+.bar>i{display:block;height:100%;border-radius:99px;background:var(--teal);transition:width .35s}
+.bar>i.warn{background:var(--orange)}.bar>i.bad{background:var(--red)}
+.wrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.wrow:last-child{margin-bottom:0}
+.wd{width:24px;font-size:11px;color:var(--muted);font-weight:650}
+.wb{flex:1;height:16px;background:var(--s2);border-radius:5px;overflow:hidden}
+.wb>i{display:block;height:100%;border-radius:5px;background:var(--blue)}
+.wb>i.over{background:var(--green)}
+.wv{width:42px;text-align:right;font-size:11px;font-weight:650;font-variant-numeric:tabular-nums}
+.grp{background:var(--s1);border-radius:14px;overflow:hidden;margin-bottom:12px}
+.grp .gh{font-size:11px;color:var(--muted);padding:12px 14px 5px;text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+.gr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-top:1px solid var(--line);gap:10px}
+.gr:first-of-type{border-top:none}
+.gr .gl{font-size:14px}.gr .gs{font-size:11px;color:var(--muted);margin-top:1px}
+.gr input,.gr select{background:var(--s2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--text);font-size:13px;width:96px;text-align:right;outline:none}
+.result{background:var(--s2);border-radius:11px;padding:13px;margin-top:8px}
+.result .rb{font-size:24px;font-weight:750;margin-bottom:3px}
+.result .rs{font-size:12px;color:var(--muted);line-height:1.4}
+.empty{text-align:center;padding:22px 10px;color:var(--muted);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--s2);border-radius:99px;padding:6px 12px;font-size:12px;color:var(--muted);cursor:pointer;font-weight:500}
+.chip.on{border-color:var(--blue);color:var(--blue);background:#12182a}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:440px;display:flex;justify-content:space-around;padding:7px 0 calc(9px + var(--safe));background:rgba(9,9,11,.94);backdrop-filter:blur(16px);border-top:1px solid var(--line);z-index:40}
+.ni{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;color:var(--faint);cursor:pointer;padding:3px 2px;min-width:0;flex:1;font-weight:500}
+.ni .ic{font-size:19px}.ni.on{color:var(--blue)}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--s3);color:var(--text);padding:9px 16px;border-radius:99px;font-size:13px;font-weight:500;opacity:0;transition:all .25s;pointer-events:none;z-index:100}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.divider{height:1px;background:var(--line);margin:12px 0}
+/* Calendar */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-nav button{background:var(--s2);border:1px solid var(--line);border-radius:8px;color:var(--text);width:36px;height:36px;font-size:16px;cursor:pointer}
+.cal-nav span{font-size:15px;font-weight:650}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-hd{text-align:center;font-size:10px;color:var(--muted);font-weight:600;padding:4px 0}
+.cal-day{aspect-ratio:1;border-radius:10px;background:var(--s2);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;position:relative;border:1.5px solid transparent}
+.cal-day.mute{opacity:.35}
+.cal-day.today{border-color:var(--blue)}
+.cal-day.work{background:#12201a}
+.cal-day.school{background:#1a1830}
+.cal-day.vac{background:#1a2818}
+.cal-day.sick{background:#2a1818}
+.cal-day.hol{background:#2a2410}
+.cal-day .dotc{width:4px;height:4px;border-radius:50%;margin-top:2px}
+.cal-day .dotc.g{background:var(--green)}.cal-day .dotc.r{background:var(--red)}.cal-day .dotc.b{background:var(--blue)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.legend span{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-card{background:var(--s2);border-radius:12px;padding:12px}
+.stat-card .sl{font-size:11px;color:var(--muted);margin-bottom:4px}
+.stat-card .sv{font-size:18px;font-weight:720;font-variant-numeric:tabular-nums}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.62);display:grid;place-items:center;padding:18px;z-index:100}
+.dlg{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:18px;width:100%;max-width:380px}
+.dlg p{margin-bottom:14px;font-size:14px;line-height:1.5}
+.nrow{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.nrow:last-child{border-bottom:none}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div id="dlgRoot"></div>
+
+<!-- HOME -->
+<div class="view active" id="v-home">
+  <div class="top"><div><h1>Wochenplan+</h1><div class="sub" id="homeDate"></div></div><button class="ibtn" onclick="go('mehr')">⚙️</button></div>
+  <div class="hero time">
+    <div class="status-row"><span class="dot" id="hDot"></span><span id="hStatus">Bereit</span></div>
+    <div class="hero-num" id="hLive">00:00:00</div>
+    <div class="hero-meta" id="hMeta">Tippe auf Start, wenn du beginnst.</div>
+    <div class="btns" id="hBtns"><button class="btn btn-green" style="grid-column:1/-1" onclick="startWork()">▶  Arbeit starten</button></div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="l">SOLL</div><div class="v" id="hSoll">8:00</div></div>
+    <div class="kpi"><div class="l">IST</div><div class="v" id="hIst">0:00</div></div>
+    <div class="kpi"><div class="l">KONTO</div><div class="v" id="hSaldo">0:00</div></div>
+  </div>
+  <div class="hero budget" onclick="go('budget')" style="cursor:pointer">
+    <div class="status-row">Wochenbudget</div>
+    <div class="hero-num" style="font-size:32px" id="hBud">0,00 €</div>
+    <div class="hero-meta">von <b id="hBudT">0</b> € · ausgegeben <b id="hBudS">0</b> €</div>
+    <div class="bar"><i id="hBudBar" style="width:0%"></i></div>
+  </div>
+  <div class="sec"><div class="sec-h"><h2>Heute</h2></div><div class="list" id="homeList"></div></div>
+  <div class="sec"><div class="sec-h"><h2>Abwesenheit heute</h2></div><div class="panel"><div class="chips" id="absChips"></div></div></div>
+</div>
+
+<!-- ZEIT -->
+<div class="view" id="v-zeit">
+  <div class="top"><div><h1>Arbeitszeit</h1></div></div>
+  <div class="hero time">
+    <div class="status-row"><span class="dot" id="zDot"></span><span id="zStatus">Bereit</span></div>
+    <div class="hero-num" id="zLive">00:00:00</div>
+    <div class="hero-meta" id="zMeta">–</div>
+    <div class="btns" id="zBtns"><button class="btn btn-green" style="grid-column:1/-1" onclick="startWork()">▶  Arbeit starten</button></div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="l">SOLL</div><div class="v" id="zSoll">8:00</div></div>
+    <div class="kpi"><div class="l">IST</div><div class="v" id="zIst">0:00</div></div>
+    <div class="kpi"><div class="l">KONTO</div><div class="v" id="zSaldo">0:00</div></div>
+  </div>
+  <div class="sec"><div class="sec-h"><h2>Blöcke</h2><span style="font-size:12px;color:var(--muted)" id="zDaySum"></span></div>
+    <div class="panel" style="display:flex;align-items:center;gap:8px;padding:10px 12px;margin-bottom:8px">
+      <button class="btn btn-soft" style="padding:8px 12px;min-width:40px" onclick="zShift(-1)">‹</button>
+      <div class="fld" style="flex:1;margin:0"><input type="date" id="zDayIn" onchange="zSet(this.value)"></div>
+      <button class="btn btn-soft" style="padding:8px 12px;min-width:40px" onclick="zShift(1)">›</button>
+    </div>
+    <div class="list" id="zBlocks"></div>
+    <button class="btn btn-soft" id="zClear" style="width:100%;margin-top:8px;color:var(--red);display:none" onclick="clearDay()">Alle Blöcke dieses Tages löschen</button>
+  </div>
+  <div class="sec"><div class="sec-h"><h2>Nachtragen</h2></div>
+    <div class="panel">
+      <div class="fld"><label>Datum</label><input type="date" id="mDate"></div>
+      <div class="row2">
+        <div class="fld"><label>Von</label><input type="time" id="mFrom" value="08:00"></div>
+        <div class="fld"><label>Bis</label><input type="time" id="mTo" value="16:30"></div>
+      </div>
+      <div class="fld"><label>Pause (Min.)</label><input type="number" id="mPause" value="30" min="0" step="5"></div>
+      <div class="fld"><label>Notiz</label><input type="text" id="mNote" placeholder="optional"></div>
+      <button type="button" class="btn btn-blue" style="width:100%" onclick="addManual()">＋ Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUDGET -->
+<div class="view" id="v-budget">
+  <div class="top"><div><h1>Budget</h1></div></div>
+  <div class="sec" style="padding-bottom:8px">
+    <div class="panel" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px">
+      <button class="btn btn-soft" style="padding:8px 12px;min-width:40px" onclick="budWeekShift(-1)">‹</button>
+      <div style="text-align:center">
+        <div style="font-size:14px;font-weight:650" id="budWeekLabel">KW –</div>
+        <div style="font-size:11px;color:var(--muted)" id="budWeekRange">–</div>
+      </div>
+      <button class="btn btn-soft" style="padding:8px 12px;min-width:40px" onclick="budWeekShift(1)">›</button>
+    </div>
+  </div>
+  <div class="hero budget">
+    <div class="status-row">Übrig diese Woche</div>
+    <div class="hero-num" id="bRem">0,00 €</div>
+    <div class="hero-meta">von <b id="bTot">0</b> € · ausgegeben <b id="bSp">0</b> € · gespart <b id="bSaved">0</b> €<br>Schnitt ab jetzt: <b id="bDaily">0</b> € · <span id="bOpen">0</span> Tage offen</div>
+    <div class="bar"><i id="bBar" style="width:0%"></i></div>
+  </div>
+  <div class="sec" style="padding-bottom:8px">
+    <div class="hero-meta" id="bSaveInfo" style="text-align:center;margin-bottom:8px"></div>
+    <button class="btn btn-soft" style="width:100%" onclick="saveRestAsSaved()" id="btnSaveRest">Rest als gespart übernehmen</button>
+  </div>
+  <div class="days" id="bDays"></div>
+  <div class="sec">
+    <div class="sec-h"><h2 id="bDayH">Do</h2><span style="font-size:12px;color:var(--muted)">Budget <b id="bDayB" style="color:var(--text)">0</b> · Rest <b id="bDayR" style="color:var(--green)">0</b></span></div>
+    <div class="panel">
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="bNoth" style="width:17px;height:17px;accent-color:var(--teal)"> Nichts ausgegeben
+      </label>
+      <div class="row2">
+        <div class="fld" style="margin:0"><input type="number" id="bAmt" placeholder="Betrag €" step="0.01" min="0" inputmode="decimal"></div>
+        <div class="fld" style="margin:0"><input type="text" id="bNote" placeholder="Notiz"></div>
+      </div>
+      <div class="fld" style="margin-top:8px"><select id="bCat"><option>Sprit</option><option>Lebensmittel</option><option>Essen gehen</option><option>Freizeit</option><option>Haushalt</option><option>Sonstiges</option></select></div>
+      <div class="qbtns">
+        <button type="button" onclick="bq(2)">+2</button><button type="button" onclick="bq(5)">+5</button>
+        <button type="button" onclick="bq(10)">+10</button><button type="button" onclick="bq(20)">+20</button>
+      </div>
+      <button class="btn btn-teal" style="width:100%" onclick="addExp()">Ausgabe hinzufügen</button>
+      <div class="list" style="margin-top:12px" id="bList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PLAN -->
+<div class="view" id="v-plan">
+  <div class="top"><div><h1>Plan</h1><div class="sub">Sparziel · Monatsplan · Netto</div></div></div>
+  <div id="planBody"></div>
+</div>
+
+<!-- WOCHE / MONAT / STATS -->
+<div class="view" id="v-woche">
+  <div class="top"><div><h1>Übersicht</h1></div></div>
+  <div class="sec">
+    <div class="chips" style="margin-bottom:12px">
+      <button class="chip on" id="tabW" onclick="setOverview('woche')">Woche</button>
+      <button class="chip" id="tabM" onclick="setOverview('monat')">Monat</button>
+      <button class="chip" id="tabS" onclick="setOverview('stats')">Statistik</button>
+    </div>
+  </div>
+  <div id="ovWoche">
+    <div class="sec"><div class="sec-h"><h2>Arbeitszeit</h2></div>
+      <div class="panel"><div id="wBars"></div><div class="divider"></div>
+        <div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:var(--muted)">Wochen-Saldo</span><span class="val" id="wSaldo">0:00</span></div>
+      </div>
+    </div>
+    <div class="sec"><div class="sec-h"><h2>Überstundenkonto</h2></div>
+      <div class="panel" style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-size:13px;color:var(--muted)">Gesamt</div><div style="font-size:11px;color:var(--faint)">inkl. Startwert</div></div>
+        <div class="val" style="font-size:20px" id="wTotal">0:00</div>
+      </div>
+    </div>
+    <div class="sec"><div class="sec-h"><h2>Budget</h2></div>
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;color:var(--muted)">Ausgegeben</span><span class="val" id="wBudS">0 €</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:13px;color:var(--muted)">Übrig</span><span class="val" style="color:var(--teal)" id="wBudL">0 €</span></div>
+        <div class="bar"><i id="wBudBar" style="width:0%"></i></div>
+      </div>
+    </div>
+  </div>
+  <div id="ovMonat" style="display:none">
+    <div class="sec">
+      <div class="panel">
+        <div class="cal-nav">
+          <button onclick="calPrev()">‹</button>
+          <span id="calTitle">–</span>
+          <button onclick="calNext()">›</button>
+        </div>
+        <div class="cal-grid" id="calHead"></div>
+        <div class="cal-grid" id="calBody" style="margin-top:4px"></div>
+        <div class="legend">
+          <span><i style="background:#12201a"></i> Arbeit</span>
+          <span><i style="background:#1a1830"></i> Berufsschule</span>
+          <span><i style="background:#1a2818"></i> Urlaub</span>
+          <span><i style="background:#2a1818"></i> Krank</span>
+          <span><i style="background:#2a2410"></i> Feiertag</span>
+        </div>
+      </div>
+    </div>
+    <div class="sec"><div class="sec-h"><h2>Monat ausgewählt</h2></div><div class="list" id="calDetail"></div></div>
+  </div>
+  <div id="ovStats" style="display:none">
+    <div class="sec"><div class="sec-h"><h2>Diese Woche</h2></div>
+      <div class="stat-grid" id="stWeek"></div>
+    </div>
+    <div class="sec"><div class="sec-h"><h2>Dieser Monat</h2></div>
+      <div class="stat-grid" id="stMonth"></div>
+    </div>
+    <div class="sec"><div class="sec-h"><h2>Gesamt</h2></div>
+      <div class="stat-grid" id="stAll"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MEHR -->
+<div class="view" id="v-mehr">
+  <div class="top"><div><h1>Mehr</h1></div><button class="ibtn" onclick="go('home')">✕</button></div>
+  <div class="sec"><div class="sec-h"><h2>Feierabend-Rechner</h2></div>
+    <div class="panel">
+      <div class="row2">
+        <div class="fld"><label>Beginn</label><input type="time" id="cStart" value="07:30"></div>
+        <div class="fld"><label>Soll (h)</label><select id="cSoll"><option>4</option><option>5</option><option>6</option><option>7</option><option>7.5</option><option selected>8</option><option>8.5</option><option>9</option></select></div>
+      </div>
+      <div class="fld"><label>Pause Min.</label><input type="number" id="cPause" value="30" min="0" step="5"></div>
+      <button class="btn btn-blue" style="width:100%" onclick="calcEnd()">Berechnen</button>
+      <div class="result"><div class="rb" id="cEnd">–:––</div><div class="rs" id="cEndS">–</div></div>
+    </div>
+  </div>
+  <div class="sec"><div class="sec-h"><h2>Noch zu arbeiten</h2></div>
+    <div class="panel">
+      <div class="row2">
+        <div class="fld"><label>Soll (h)</label><select id="rSoll"><option>4</option><option>5</option><option>6</option><option>7</option><option>7.5</option><option selected>8</option><option>8.5</option><option>9</option></select></div>
+        <div class="fld"><label>Bereits (5:20)</label><input type="text" id="rDone" value="5:00"></div>
+      </div>
+      <button class="btn btn-blue" style="width:100%" onclick="calcRem()">Berechnen</button>
+      <div class="result"><div class="rb" id="rTime">–:––</div><div class="rs" id="rSub">–</div></div>
+    </div>
+  </div>
+  <div class="sec"><div class="sec-h"><h2>Ausbildung</h2></div>
+    <div class="panel">
+      <div class="fld"><label>Beruf</label><input type="text" id="aBeruf" placeholder="Fachinformatiker …" onchange="saveEx()"></div>
+      <div class="row2">
+        <div class="fld"><label>Beginn</label><input type="date" id="aStart" onchange="saveEx()"></div>
+        <div class="fld"><label>Ende</label><input type="date" id="aEnde" onchange="saveEx()"></div>
+      </div>
+      <div id="aProg"></div>
+    </div>
+  </div>
+  <div class="sec"><div class="sec-h"><h2>Urlaub</h2></div>
+    <div class="panel">
+      <div class="fld"><label>Anspruch / Jahr (Tage)</label><input type="number" id="uAn" value="30" min="0" onchange="saveEx()"></div>
+      <div id="uRest" style="font-size:14px;font-weight:650;margin-top:4px"></div>
+    </div>
+  </div>
+  <div class="sec"><div class="sec-h"><h2>Sollzeit pro Wochentag</h2></div>
+    <div class="grp" id="sollDays"></div>
+  </div>
+  <div class="sec"><div class="sec-h"><h2>Feiertage</h2></div>
+    <div class="grp">
+      <div class="gr"><div><div class="gl">Bundesland</div></div>
+        <select id="sLand" onchange="saveSet()" style="width:140px;text-align:left">
+          <option value="BY" selected>Bayern</option><option value="NW">NRW</option><option value="BW">Baden-Württ.</option>
+          <option value="BE">Berlin</option><option value="HH">Hamburg</option><option value="HE">Hessen</option>
+          <option value="NI">Niedersachsen</option><option value="SN">Sachsen</option><option value="ST">Sachsen-Anhalt</option>
+          <option value="TH">Thüringen</option><option value="RP">Rheinland-Pfalz</option><option value="SL">Saarland</option>
+          <option value="SH">Schleswig-Holst.</option><option value="MV">Mecklenburg-Vorp.</option><option value="BB">Brandenburg</option>
+          <option value="HB">Bremen</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="sec"><div class="sec-h"><h2>Einstellungen</h2></div>
+    <div class="grp">
+      <div class="gh">Allgemein</div>
+      <div class="gr"><div><div class="gl">Standard-Pause</div><div class="gs">Minuten</div></div>
+        <input type="number" id="sPause" value="30" min="0" step="5" onchange="saveSet()" style="width:70px"></div>
+      <div class="gr"><div><div class="gl">Start-Saldo</div><div class="gs">Überstunden</div></div>
+        <input type="text" id="sSaldo" value="0:00" onchange="saveSet()" style="width:80px"></div>
+      <div class="gr"><div><div class="gl">Wochenbudget €</div></div>
+        <input type="number" id="sBud" value="100" min="1" onchange="saveSet()" style="width:80px"></div>
+    </div>
+    <div class="grp">
+      <div class="gh">Backup</div>
+      <div class="gr" style="flex-direction:column;align-items:stretch;gap:8px">
+        <button class="btn btn-soft" onclick="exportJSON()">JSON exportieren</button>
+        <button class="btn btn-soft" onclick="document.getElementById('importFile').click()">JSON importieren</button>
+        <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importJSON(event)">
+        <button class="btn btn-soft" onclick="exportCSV()">CSV Arbeitszeiten</button>
+        <button class="btn btn-soft" style="color:var(--red)" onclick="doReset()">Alles löschen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="nav">
+  <div class="ni on" data-v="home" onclick="go('home')"><span class="ic">🏠</span>Home</div>
+  <div class="ni" data-v="zeit" onclick="go('zeit')"><span class="ic">⏱</span>Zeit</div>
+  <div class="ni" data-v="budget" onclick="go('budget')"><span class="ic">💶</span>Budget</div>
+  <div class="ni" data-v="plan" onclick="go('plan')"><span class="ic">💼</span>Plan</div>
+  <div class="ni" data-v="woche" onclick="go('woche')"><span class="ic">📅</span>Übersicht</div>
+  <div class="ni" data-v="mehr" onclick="go('mehr')"><span class="ic">⋯</span>Mehr</div>
+</div>
+
+<script>
+const DK=["Mo","Di","Mi","Do","Fr","Sa","So"];
+const DF=["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"];
+const DS=["So","Mo","Di","Mi","Do","Fr","Sa"];
+const CI={Sprit:"⛽",Lebensmittel:"🛒","Essen gehen":"🍽️",Freizeit:"🎮",Haushalt:"🏠",Sonstiges:"📦"};
+const ABS=["Arbeit","Berufsschule","Urlaub","Krankheit","Homeoffice","Frei"];
+let TI=(()=>{const d=new Date().getDay();return d===0?6:d-1;})();
+
+// Fixed + variable German holidays (simplified, current year focus)
+function easterSunday(y){
+  // Anonymous Gregorian algorithm
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),
+    g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,
+    l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+    month=Math.floor((h+l-7*m+114)/31),day=((h+l-7*m+114)%31)+1;
+  return new Date(y,month-1,day);
+}
+function holidaysCalc(year, land){
+  const pad=n=>String(n).padStart(2,"0");
+  const key=(m,d)=>year+"-"+pad(m)+"-"+pad(d);
+  const list={};
+  // nationwide
+  [[1,1],[5,1],[10,3],[12,25],[12,26]].forEach(([m,d])=>{list[key(m,d)]="Feiertag";});
+  const easter=easterSunday(year);
+  const addDays=(dt,n)=>{const x=new Date(dt);x.setDate(x.getDate()+n);return x;};
+  const ek=d=>{const x=addDays(easter,d);return key(x.getMonth()+1,x.getDate());};
+  list[ek(-2)]="Feiertag"; // Karfreitag
+  list[ek(1)]="Feiertag";  // Ostermontag
+  list[ek(39)]="Feiertag"; // Christi Himmelfahrt
+  list[ek(50)]="Feiertag"; // Pfingstmontag
+  // regional (simplified)
+  const regional={
+    BY:[key(1,6),ek(60),key(8,15),key(11,1)], // Hl.3 Könige, Fronleichnam, Mariä Himmelfahrt, Allerheiligen
+    BW:[key(1,6),ek(60),key(11,1)],
+    NW:[ek(60),key(11,1)],
+    HE:[ek(60)],
+    RP:[ek(60),key(11,1)],
+    SL:[ek(60),key(8,15),key(11,1)],
+    SN:[ek(60),key(10,31)], // Reformation
+    ST:[key(1,6),key(10,31)],
+    TH:[key(10,31)],
+    BB:[key(10,31)],
+    MV:[key(10,31)],
+    SH:[key(10,31)],
+    HH:[key(10,31)],
+    NI:[key(10,31)],
+    HB:[key(10,31)],
+    BE:[]
+  };
+  regional.BE.push(key(3,8));regional.MV.push(key(3,8));regional.TH.push(key(9,20));
+  { // Buß- und Bettag (SN): Mittwoch vor dem 23.11.
+    const b=new Date(year,10,22);while(b.getDay()!==3)b.setDate(b.getDate()-1);
+    regional.SN.push(key(b.getMonth()+1,b.getDate()));
+  }
+  (regional[land]||[]).forEach(k=>{list[k]="Feiertag";});
+  return list;
+}
+const _holC={};
+function holidaysFor(year,land){const k=year+"|"+land;return _holC[k]||(_holC[k]=holidaysCalc(year,land));}
+
+let S=load(), selB=TI, tick=null, calY=new Date().getFullYear(), calM=new Date().getMonth(), ovMode="woche", zDay=tKey(), calSel=null;
+
+function def(){return{
+  set:{pause:30,saldoMin:0,budget:100,land:"BY",
+    soll:[8,8,8,8,8,0,0] // Mo-So hours
+  },
+  time:{}, live:null,
+  // weeks: { "2026-W41": { budget, expenses:{Mo:[]...}, nothing:{}, savedFromRest:0 } }
+  weeks:{},
+  totalSaved:0,
+  abs:{},
+  ex:{beruf:"",start:"",ende:"",uAn:30,uGe:0},
+  fix:[],goal:0,inc:0,puf:0,bn:{g:0,k:false,a:"18",z:2.9,c:1,kids:0}
+};}
+function norm(o){
+  const d=def();
+  if(!o||typeof o!=="object")return def();
+  if(!o.set)o.set=d.set;
+  if(!o.set.soll||o.set.soll.length!==7)o.set.soll=[8,8,8,8,8,0,0];
+  if(!o.set.land)o.set.land="BY";
+  if(typeof o.set.saldoMin!=="number")o.set.saldoMin=0;
+  if(!o.weeks)o.weeks={};
+  if(o.totalSaved==null)o.totalSaved=0;
+  if(!o.time||typeof o.time!=="object")o.time={};
+  // Sicherstellen, dass jeder Tag ein blocks-Array hat
+  Object.keys(o.time).forEach(k=>{
+    if(!o.time[k]||typeof o.time[k]!=="object")o.time[k]={blocks:[]};
+    if(!Array.isArray(o.time[k].blocks))o.time[k].blocks=[];
+  });
+  if(!o.abs)o.abs={};
+  if(!o.ex)o.ex=d.ex;
+  if(!Array.isArray(o.fix))o.fix=[];
+  ["goal","inc","puf"].forEach(k=>{if(typeof o[k]!=="number"||isNaN(o[k]))o[k]=0;});
+  if(!o.bn)o.bn=d.bn;
+  sanitizeData(o);
+  return o;
+}
+/** Bereinigt Daten (Speicher oder Import): erzwingt Typen, verwirft ungültige Einträge. */
+function sanitizeData(o){
+  const isNum=x=>typeof x==="number"&&isFinite(x);
+  const d=def();
+  ["weeks","abs","ex","bn","set","time"].forEach(k=>{if(!o[k]||typeof o[k]!=="object"||Array.isArray(o[k]))o[k]=d[k];});
+  if(!Array.isArray(o.set.soll)||o.set.soll.length!==7)o.set.soll=[8,8,8,8,8,0,0];
+  const DAY=/^\d{4}-\d{2}-\d{2}$/,TM=/^\d{1,2}:\d{2}$/;
+  const validDay=k=>{if(!DAY.test(k))return false;const t=new Date(k+"T12:00:00");return !isNaN(t.getTime())&&t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0")===k;};
+  const s=o.set;
+  if(!isNum(+s.pause)||+s.pause<0)s.pause=30;else s.pause=+s.pause;
+  if(!isNum(+s.budget)||+s.budget<=0)s.budget=100;else s.budget=+s.budget;
+  if(!isNum(s.saldoMin))s.saldoMin=0;
+  if(typeof s.land!=="string")s.land="BY";
+  s.soll=s.soll.map(x=>(isNum(+x)&&+x>=0&&+x<=24)?+x:0);
+  Object.keys(o.time).forEach(k=>{
+    const day=o.time[k];
+    if(!validDay(k)||!day||typeof day!=="object"){delete o.time[k];return;}
+    day.blocks=(Array.isArray(day.blocks)?day.blocks:[]).filter(b=>b&&typeof b==="object"&&TM.test(String(b.start))&&TM.test(String(b.end))).map(b=>{
+      const c={start:String(b.start),end:String(b.end),pauseMin:(isNum(+b.pauseMin)&&+b.pauseMin>=0)?+b.pauseMin:0,note:typeof b.note==="string"?b.note:"",source:b.source==="live"?"live":"manual"};
+      if(isNum(b.dur)&&b.dur>=0)c.dur=b.dur;
+      return c;
+    });
+    if(!day.blocks.length)delete o.time[k];
+  });
+  Object.keys(o.abs).forEach(k=>{if(!validDay(k)||ABS.indexOf(o.abs[k])<0)delete o.abs[k];});
+  Object.keys(o.weeks).forEach(wk=>{
+    const w=o.weeks[wk];
+    if(!/^\d{4}-W\d{2}$/.test(wk)||!w||typeof w!=="object"){delete o.weeks[wk];return;}
+    w.budget=(isNum(+w.budget)&&+w.budget>0)?+w.budget:s.budget;
+    if(!w.expenses||typeof w.expenses!=="object")w.expenses={};
+    if(!w.nothing||typeof w.nothing!=="object")w.nothing={};
+    DK.forEach(dk=>{
+      const arr=Array.isArray(w.expenses[dk])?w.expenses[dk]:[];
+      w.expenses[dk]=arr.filter(e=>e&&isNum(+e.amount)&&+e.amount>0&&+e.amount<=1e6).map(e=>({amount:Math.round(+e.amount*100)/100,note:typeof e.note==="string"?e.note:"",cat:typeof e.cat==="string"?e.cat:"Sonstiges"}));
+      w.nothing[dk]=w.nothing[dk]?1:0;
+    });
+    w.savedFromRest=(isNum(+w.savedFromRest)&&+w.savedFromRest>0)?+w.savedFromRest:0;
+    if(w.closed)w.closed=true;else delete w.closed;
+  });
+  if(!isNum(o.totalSaved)||o.totalSaved<0)o.totalSaved=0;
+  const ex=o.ex;
+  ["beruf","start","ende"].forEach(k=>{if(typeof ex[k]!=="string")ex[k]="";});
+  ["uAn","uGe"].forEach(k=>{ex[k]=(isNum(+ex[k])&&+ex[k]>=0)?+ex[k]:(k==="uAn"?30:0);});
+  o.fix=o.fix.filter(f=>f&&typeof f.n==="string"&&isNum(+f.a)&&+f.a>0).map(f=>({n:f.n,a:+f.a,p:f.p==="w"?"w":"m"}));
+  const bn=o.bn;
+  bn.g=(isNum(+bn.g)&&+bn.g>0)?+bn.g:0;
+  bn.z=(isNum(+bn.z)&&+bn.z>=0&&+bn.z<=10)?+bn.z:2.9;
+  bn.k=!!bn.k;
+  if(["u18","18","23"].indexOf(bn.a)<0)bn.a="18";
+  bn.c=[1,2,3,4].indexOf(+bn.c)<0?1:+bn.c;
+  bn.kids=Math.max(0,Math.min(5,(+bn.kids)|0));
+  const L=o.live;
+  if(L){
+    if(typeof L!=="object"||!isNum(L.startTs)||(L.status!=="running"&&L.status!=="paused"))o.live=null;
+    else{
+      if(!isNum(L.pausedTotalMs)||L.pausedTotalMs<0)L.pausedTotalMs=0;
+      if(L.status==="paused"&&!isNum(L.pausedAt))o.live=null;
+    }
+  }
+}
+function load(){
+  const tryKey=k=>{
+    try{
+      const r=localStorage.getItem(k);if(!r)return null;
+      const o=JSON.parse(r);
+      return (o&&typeof o==="object"&&!Array.isArray(o))?norm(o):null;
+    }catch(e){console.error("load failed",k,e);return null;}
+  };
+  try{
+    const raw=localStorage.getItem("wp_plus_v1");
+    let o=tryKey("wp_plus_v1");
+    if(o)return o;
+    // Hauptspeicher vorhanden, aber unlesbar → Rohdaten aufheben, nie stillschweigend überschreiben
+    if(raw){try{localStorage.setItem("wp_plus_corrupt",raw);}catch(_){}}
+    o=tryKey("wp_plus_bak");
+    if(o){window.__loadNote="Daten aus der Sicherung wiederhergestellt";return o;}
+    o=tryKey("wp_v4");
+    if(o){try{localStorage.setItem("wp_plus_v1",JSON.stringify(o));}catch(_){}return o;}
+    const old=localStorage.getItem("wp_v3");
+    if(old){
+      const o3=JSON.parse(old);
+      const n=def();
+      Object.assign(n.set,o3.set||{});
+      n.time=o3.time||{};n.live=o3.live||null;n.abs=o3.abs||{};n.ex=o3.ex||n.ex;
+      const wk=isoWeekKey(new Date());
+      n.weeks[wk]={budget:n.set.budget,expenses:o3.bud||{Mo:[],Di:[],Mi:[],Do:[],Fr:[],Sa:[],So:[]},nothing:o3.noth||{},savedFromRest:0};
+      norm(n);localStorage.setItem("wp_plus_v1",JSON.stringify(n));
+      return n;
+    }
+  }catch(e){console.error("load failed",e);}
+  return def();
+}
+function save(){
+  try{
+    // Immer frische Kopie serialisieren (keine zyklischen Refs)
+    const payload=JSON.stringify(S);
+    localStorage.setItem("wp_plus_v1",payload);
+    // Zweiter Key als Fallback (manche Browser löschen einzelne Keys)
+    try{localStorage.setItem("wp_plus_bak",payload);}catch(_){}
+    const check=localStorage.getItem("wp_plus_v1");
+    if(!check||check.length<10)throw new Error("write-verify-failed");
+    // Parse-Roundtrip: sicherstellen, dass time-Blöcke drin sind
+    const parsed=JSON.parse(check);
+    if(!parsed||typeof parsed!=="object")throw new Error("parse-failed");
+    return true;
+  }catch(e){
+    console.error("save failed",e);
+    toast("Speichern fehlgeschlagen – Speicher voll oder Privatmodus?");
+    return false;
+  }
+}
+
+function isoWeekKey(d){
+  const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const dayNum=date.getUTCDay()||7;
+  date.setUTCDate(date.getUTCDate()+4-dayNum);
+  const yearStart=new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  const weekNo=Math.ceil((((date-yearStart)/86400000)+1)/7);
+  return date.getUTCFullYear()+"-W"+String(weekNo).padStart(2,"0");
+}
+function weekKeyToRange(wk){
+  // approximate: parse year and week, return label
+  const [ys,ws]=wk.split("-W");const y=+ys,w=+ws;
+  // ISO week: Jan 4 is always in week 1
+  const jan4=new Date(y,0,4);const day=jan4.getDay()||7;
+  const monday=new Date(jan4);monday.setDate(jan4.getDate()-day+1+(w-1)*7);
+  const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
+  const f=d=>pad(d.getDate())+"."+pad(d.getMonth()+1)+".";
+  return {monday,sunday,label:f(monday)+" – "+f(sunday)};
+}
+function emptyWeek(){
+  return {
+    budget:S.set.budget,
+    expenses:{Mo:[],Di:[],Mi:[],Do:[],Fr:[],Sa:[],So:[]},
+    nothing:{Mo:0,Di:0,Mi:0,Do:0,Fr:0,Sa:0,So:0},
+    savedFromRest:0
+  };
+}
+function ensureWeek(wk){
+  if(!S.weeks[wk]) S.weeks[wk]=emptyWeek();
+  DK.forEach(k=>{
+    if(!S.weeks[wk].expenses[k]) S.weeks[wk].expenses[k]=[];
+    if(S.weeks[wk].nothing[k]==null) S.weeks[wk].nothing[k]=0;
+  });
+  if(S.weeks[wk].budget==null) S.weeks[wk].budget=S.set.budget;
+  return S.weeks[wk];
+}
+// Nur lesen – legt keine leere Woche dauerhaft an
+function getWeek(wk){
+  if(S.weeks[wk]) return ensureWeek(wk);
+  return emptyWeek();
+}
+
+let budWeekOffset=0; // 0=aktuelle ISO-Woche
+function currentBudWeekKey(){
+  const d=new Date();d.setDate(d.getDate()+budWeekOffset*7);
+  return isoWeekKey(d);
+}
+
+function pad(n){return String(n).padStart(2,"0");}
+function fDur(ms){if(ms<0)ms=0;const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return`${pad(h)}:${pad(m)}:${pad(sec)}`;}
+function fHM(min){const n=min<0;const a=Math.abs(Math.round(min));return(n?"−":"")+Math.floor(a/60)+":"+pad(a%60);}
+function pHM(str){
+  if(!str)return 0;
+  let s=String(str).trim().replace("−","-").replace(",",".");
+  const n=s.startsWith("-");if(n)s=s.slice(1);
+  // "4:30" oder "4.5" (Stunden)
+  if(s.includes(":")){const p=s.split(":").map(Number);return(n?-1:1)*((p[0]||0)*60+(p[1]||0));}
+  const h=parseFloat(s);return(n?-1:1)*Math.round((h||0)*60);
+}
+function tKey(){const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function dKey(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function monday(d){const x=new Date(d);const day=x.getDay();x.setDate(x.getDate()+(day===0?-6:1-day));x.setHours(0,0,0,0);return x;}
+function euro(n){const x=Number(n);if(!isFinite(x))return "0,00";return x.toFixed(2).replace(".",",");}
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800);}
+function sollForDate(d){
+  const k=dKey(d);
+  const hol=holidaysFor(d.getFullYear(),S.set.land||"BY");
+  if(hol[k])return 0;
+  const abs=S.abs[k];
+  if(abs&&abs!=="Arbeit"&&abs!=="Homeoffice")return 0;
+  const js=d.getDay(); const idx=js===0?6:js-1;
+  return (S.set.soll[idx]||0)*60;
+}
+function sollToday(){return sollForDate(new Date());}
+/** Soll nur ab dem ersten erfassten Tag bis heute zählen; heute nur, wenn schon gearbeitet wird/wurde. */
+function firstTracked(){
+  let f=null;Object.keys(S.time).forEach(k=>{if(f===null||k<f)f=k;});
+  if(S.live){const k=dKey(new Date(S.live.startTs));if(f===null||k<f)f=k;}
+  return f;
+}
+function sollUpTo(d){
+  const k=dKey(d),t=tKey(),f=firstTracked();
+  if(f===null||k<f)return 0; // vor dem ersten Eintrag zählt nichts als „fehlend“
+  if(k>t)return 0;
+  if(k===t){const w=dayMin(k)+liveMinFor(k);return w>0?sollForDate(d):0;}
+  return sollForDate(d);
+}
+
+// HELFER
+const num=x=>parseFloat(String(x).replace(",","."));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function dlg(msg,ok,cb,cancel,cancelCb){
+  const r=document.getElementById("dlgRoot");
+  r.innerHTML=`<div class="ov"><div class="dlg"><p>${msg}</p><div class="btns g2"><button class="btn btn-soft" id="dlgC">${cancel||"Abbrechen"}</button><button class="btn btn-red" id="dlgO">${ok}</button></div></div></div>`;
+  document.getElementById("dlgO").onclick=()=>{r.innerHTML="";cb();};
+  document.getElementById("dlgC").onclick=()=>{r.innerHTML="";if(cancelCb)cancelCb();};
+}
+
+function setH(el,html){if(!el||el._h===html)return;el._h=html;el.innerHTML=html;}
+
+// TIME
+function ens(k){if(!S.time)S.time={};if(!S.time[k])S.time[k]={blocks:[]};if(!Array.isArray(S.time[k].blocks))S.time[k].blocks=[];return S.time[k];}
+function bMin(b){
+  if(b&&typeof b.dur==="number"&&b.dur>=0)return Math.round(b.dur);
+  if(!b||!b.start||!b.end)return 0;
+  const sp=String(b.start).split(":"),ep=String(b.end).split(":");
+  const sh=+sp[0],sm=+(sp[1]||0),eh=+ep[0],em=+(ep[1]||0);
+  if([sh,sm,eh,em].some(x=>isNaN(x)))return 0;
+  let m=(eh*60+em)-(sh*60+sm);if(m<0)m+=1440;
+  return Math.max(0,m-(+b.pauseMin||0));
+}
+function dayMin(k){const d=S.time&&S.time[k];if(!d||!Array.isArray(d.blocks))return 0;return d.blocks.reduce((s,b)=>s+bMin(b),0);}
+function liveMs(){if(!S.live)return 0;if(S.live.status==="paused")return Math.max(0,(S.live.pausedAt-S.live.startTs)-(S.live.pausedTotalMs||0));return Math.max(0,(Date.now()-S.live.startTs)-(S.live.pausedTotalMs||0));}
+function liveDay(){return S.live?dKey(new Date(S.live.startTs)):null;}
+/** Laufende Minuten des Timers – nur für dessen Starttag; ein offener alter Timer (Rückfrage ausstehend) zählt noch nicht. */
+function liveMinFor(k){
+  if(!S.live||liveDay()!==k)return 0;
+  if(k!==tKey()&&!S.live.keepOver)return 0;
+  return Math.floor(liveMs()/60000);
+}
+function todayMin(){return dayMin(tKey())+liveMinFor(tKey());}
+
+function startWork(){if(S.live)return;S.live={startTs:Date.now(),pausedAt:null,pausedTotalMs:0,status:"running"};save();startTick();drawTime();toast("Gestartet");}
+function pauseWork(){if(!S.live||S.live.status!=="running")return;S.live.status="paused";S.live.pausedAt=Date.now();save();drawTime();toast("Pause");}
+function resumeWork(){if(!S.live||S.live.status!=="paused")return;S.live.pausedTotalMs+=(Date.now()-S.live.pausedAt);S.live.pausedAt=null;S.live.status="running";save();startTick();drawTime();toast("Weiter");}
+function stopWork(){
+  if(!S.live)return;
+  const et=S.live.status==="paused"?S.live.pausedAt:Date.now();
+  const ms=Math.max(0,(et-S.live.startTs)-(S.live.pausedTotalMs||0));
+  const min=Math.floor(ms/60000);
+  if(min<1){S.live=null;save();stopTick();drawTime();toast("Zu kurz (unter 1 Min.) – nicht gespeichert");return;}
+  if(min>960){
+    dlg("Der Timer lief "+fHM(min)+" – ungewöhnlich lang. Trotzdem speichern?","Speichern",()=>finishWork(et,Math.max(min,1)),"Verwerfen",()=>{S.live=null;save();stopTick();drawTime();toast("Verworfen");});
+    return;
+  }
+  finishWork(et,Math.max(min,0));
+}
+function finishWork(et,min){
+  if(!S.live)return;
+  const sd=new Date(S.live.startTs),ed=new Date(et);
+  const dayKey=dKey(sd);
+  ens(dayKey).blocks.push({
+    start:pad(sd.getHours())+":"+pad(sd.getMinutes()),
+    end:pad(ed.getHours())+":"+pad(ed.getMinutes()),
+    pauseMin:Math.round((S.live.pausedTotalMs||0)/60000),
+    note:"",source:"live",dur:Math.max(0,min)
+  });
+  S.live=null;stopTick();
+  zDay=dayKey;
+  const zin=document.getElementById("zDayIn");if(zin)zin.value=dayKey;
+  const md=document.getElementById("mDate");if(md)md.value=dayKey;
+  const ok=save();
+  drawTime();
+  toast(ok?("Gespeichert ("+fHM(Math.max(min,0))+")"):"Speichern fehlgeschlagen");
+}
+function startTick(){stopTick();tick=setInterval(()=>{if(S.live&&S.live.status==="running")drawTime();},1000);}
+function stopTick(){if(tick){clearInterval(tick);tick=null;}}
+function addManual(force){
+  const dateEl=document.getElementById("mDate");
+  const fromEl=document.getElementById("mFrom");
+  const toEl=document.getElementById("mTo");
+  const pauseEl=document.getElementById("mPause");
+  const noteEl=document.getElementById("mNote");
+  let date=(dateEl&&dateEl.value)||"";
+  let from=(fromEl&&fromEl.value)||"";
+  let to=(toEl&&toEl.value)||"";
+  if(!date)date=zDay||tKey();
+  if(!from||!to){toast("Von und Bis angeben");return;}
+  const normT=t=>{const p=String(t).trim().replace(".",":").split(":");return pad(+p[0]||0)+":"+pad(+p[1]||0);};
+  from=normT(from);to=normT(to);
+  const pause=Math.max(0,parseInt(pauseEl&&pauseEl.value,10)||0);
+  const note=((noteEl&&noteEl.value)||"").trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){toast("Datum ungültig – bitte wählen");return;}
+  const net=bMin({start:from,end:to,pauseMin:pause});
+  if(net<=0){toast("Nettozeit muss > 0 sein (Von vor Bis, Pause prüfen)");return;}
+  if(dayMin(date)+net>1440){toast("Mehr als 24 h an einem Tag – nicht gespeichert");return;}
+  const dup=((S.time[date]&&S.time[date].blocks)||[]).some(b=>b.start===from&&b.end===to&&(+b.pauseMin||0)===pause);
+  if(dup&&!force){dlg("An diesem Tag gibt es schon einen Block <b>"+from+" – "+to+"</b>. Trotzdem noch einen hinzufügen?","Hinzufügen",()=>addManual(true),"Abbrechen");return;}
+  ens(date).blocks.push({
+    start:from,end:to,pauseMin:pause,
+    note:note||(date!==tKey()?"Nachgetragen":""),
+    source:"manual"
+  });
+  zDay=date;
+  const zin=document.getElementById("zDayIn");if(zin)zin.value=date;
+  if(dateEl)dateEl.value=date;
+  const ok=save();
+  drawTime();
+  if(ok){if(noteEl)noteEl.value="";toast("Gespeichert ("+fHM(net)+") · "+date);}
+  else toast("Speichern fehlgeschlagen");
+}
+function delBlock(k,i){
+  i=Number(i);
+  if(!S.time)S.time={};
+  if(!S.time[k]||!Array.isArray(S.time[k].blocks)){toast("Kein Eintrag gefunden");return;}
+  if(i<0||i>=S.time[k].blocks.length){toast("Eintrag nicht gefunden");return;}
+  S.time[k].blocks.splice(i,1);
+  if(!S.time[k].blocks.length)delete S.time[k];
+  const ok=save();
+  if(zDay!==k)zDay=k;
+  drawTime();
+  if(calSel===k&&typeof calClick==="function")try{calClick(k);}catch(_){}
+  toast(ok?"Gelöscht":"Löschen nicht gespeichert");
+}
+function delBlockAsk(k,i,ev){
+  if(ev){try{ev.preventDefault();ev.stopPropagation();}catch(_){}}
+  i=Number(i);
+  const b=S.time&&S.time[k]&&S.time[k].blocks&&S.time[k].blocks[i];
+  if(!b){toast("Eintrag nicht gefunden");return;}
+  dlg("Block <b>"+esc(b.start)+" – "+esc(b.end)+"</b> ("+fHM(bMin(b))+") wirklich löschen?","Löschen",()=>delBlock(k,i),"Abbrechen");
+}
+function clearDay(){
+  const key=zDay;
+  const n=(S.time[key]&&S.time[key].blocks&&S.time[key].blocks.length)||0;
+  if(!n){toast("Keine Blöcke");return;}
+  dlg("Alle <b>"+n+"</b> Blöcke am <b>"+key+"</b> ("+fHM(dayMin(key))+") löschen?","Alle löschen",()=>{
+    delete S.time[key];
+    const ok=save();
+    drawTime();
+    if(calSel===key&&typeof calClick==="function")try{calClick(key);}catch(_){}
+    toast(ok?"Tag gelöscht":"Löschen nicht gespeichert");
+  },"Abbrechen");
+}
+function zSet(v){if(!v)return;zDay=v;const m=document.getElementById("mDate");if(m)m.value=v;drawTime();}
+function zShift(n){const d=new Date(zDay+"T12:00:00");d.setDate(d.getDate()+n);zSet(dKey(d));}
+function drawBlocks(){
+  const box=document.getElementById("zBlocks");if(!box)return;
+  const key=zDay,day=S.time&&S.time[key],tot=dayMin(key),d=new Date(key+"T12:00:00"),soll=sollForDate(d);
+  const inp=document.getElementById("zDayIn");if(inp&&inp.value!==key&&document.activeElement!==inp)inp.value=key;
+  const sumEl=document.getElementById("zDaySum");
+  if(sumEl)sumEl.innerHTML=DS[d.getDay()]+", "+pad(d.getDate())+"."+pad(d.getMonth()+1)+". · <b style=\"color:"+(tot>720?"var(--red)":"var(--text)")+"\">"+fHM(tot)+"</b> / "+fHM(soll);
+  const clr=document.getElementById("zClear");if(clr)clr.style.display=(day&&day.blocks&&day.blocks.length)?"block":"none";
+  if(!day||!Array.isArray(day.blocks)||!day.blocks.length){setH(box,`<div class="empty">Keine Blöcke</div>`);return;}
+  const _html=(tot>720?`<div class="empty" style="color:var(--red);padding:6px 4px 10px">⚠ ${fHM(tot)} an einem Tag – bitte falsche Blöcke löschen</div>`:"")+
+    day.blocks.map((b,i)=>`<div class="item"><div class="ico">${b.source==="live"?"⏱":"✏️"}</div><div class="info"><div class="t">${esc(b.start)} – ${esc(b.end)}</div><div class="s">${b.pauseMin?b.pauseMin+" min Pause":"ohne Pause"}${b.note?" · "+esc(b.note):""}</div></div><div class="val">${fHM(bMin(b))}</div><button type="button" class="xbtn" data-del-day="${key}" data-del-i="${i}" aria-label="Löschen">✕</button></div>`).join("");
+  if(box._h===_html)return;box._h=_html;box.innerHTML=_html;
+  box.querySelectorAll("[data-del-day]").forEach(btn=>{
+    btn.addEventListener("click",function(e){
+      e.preventDefault();e.stopPropagation();
+      delBlockAsk(this.getAttribute("data-del-day"),+this.getAttribute("data-del-i"),e);
+    },{passive:false});
+  });
+}
+
+/** Gesamtes Überstundenkonto: Startwert + Summe (Ist − Soll) aller Tage inkl. Live. */
+function totalSaldoMin(){
+  let total=S.set.saldoMin||0;
+  const f=firstTracked();if(f===null)return total;
+  let last=tKey();
+  Object.keys(S.time||{}).forEach(k=>{if(k>last)last=k;});
+  if(S.live){const ld=liveDay();if(ld>last)last=ld;}
+  const d=new Date(f+"T12:00:00"),end=new Date(last+"T12:00:00");
+  for(let i=0;d<=end&&i<20000;i++,d.setDate(d.getDate()+1)){
+    const k=dKey(d);
+    total+=dayMin(k)+liveMinFor(k)-sollUpTo(d);
+  }
+  return total;
+}
+function dayDiffMin(k){
+  const d=new Date(k+"T12:00:00");
+  let w=dayMin(k);
+  w+=liveMinFor(k);
+  return w-sollForDate(d);
+}
+
+function drawTime(){
+  const soll=sollToday(),worked=todayMin(),dayDiff=worked-soll,remain=soll-worked;
+  const total=totalSaldoMin();
+  const abs=S.abs[tKey()]||"Arbeit";
+  [["h","h"],["z","z"]].forEach(([p,st])=>{
+    const dot=document.getElementById(p+"Dot"),status=document.getElementById(p+"Status");
+    const live=document.getElementById(p+"Live"),meta=document.getElementById(p+"Meta"),btns=document.getElementById(p+"Btns");
+    document.getElementById(st+"Soll").textContent=fHM(soll);
+    document.getElementById(st+"Ist").textContent=fHM(worked);
+    // SALDO = Überstundenkonto (Start 0 + alles über Soll)
+    const se=document.getElementById(st+"Saldo");
+    se.textContent=(total>=0?"+":"")+fHM(total);
+    se.className="v "+(total>0?"up":total<0?"dn":"");
+    if(abs!=="Arbeit"&&abs!=="Homeoffice"&&!S.live){
+      dot.className="dot";status.textContent=abs;live.textContent="—";meta.textContent="Heute: "+abs+" · Soll 0 · Konto "+((total>=0?"+":"")+fHM(total));
+      btns.className="btns";setH(btns,`<button class="btn btn-soft" style="grid-column:1/-1" onclick="setAbs('Arbeit')">Zurück zu Arbeit</button>`);return;
+    }
+    if(!S.live){
+      dot.className="dot";status.textContent="Bereit";live.textContent="00:00:00";
+      if(worked>0){const end=remain>0?new Date(Date.now()+remain*60000):null;
+        meta.innerHTML=`Heute <b>${fHM(worked)}</b> / ${fHM(soll)} · Tag ${(dayDiff>=0?"+":"")+fHM(dayDiff)}`+
+          (end?`<br>Ende ca. <b>${pad(end.getHours())}:${pad(end.getMinutes())}</b>`:"")+
+          `<br>Konto <b>${(total>=0?"+":"")+fHM(total)}</b>`;
+      }else meta.textContent="Tippe auf Start · Konto "+((total>=0?"+":"")+fHM(total));
+      btns.className="btns";setH(btns,`<button class="btn btn-green" style="grid-column:1/-1" onclick="startWork()">▶  Arbeit starten</button>`);
+    }else{
+      const ms=liveMs();live.textContent=fDur(ms);
+      if(S.live.status==="running"){
+        dot.className="dot run";status.textContent="Arbeit läuft";
+        const end=remain>0?new Date(Date.now()+remain*60000):null;
+        meta.innerHTML=`Seit ${pad(new Date(S.live.startTs).getHours())}:${pad(new Date(S.live.startTs).getMinutes())} · Ist <b>${fHM(worked)}</b> / ${fHM(soll)}`+
+          (remain>0?`<br>Noch <b>${fHM(remain)}</b>`+(end?` · Ende ca. <b>${pad(end.getHours())}:${pad(end.getMinutes())}</b>`:""):`<br><span style="color:var(--green)">Soll erreicht</span>`)+
+          `<br>Konto <b>${(total>=0?"+":"")+fHM(total)}</b>`;
+        btns.className="btns g2";setH(btns,`<button class="btn btn-orange" onclick="pauseWork()">⏸ Pause</button><button class="btn btn-red" onclick="stopWork()">■ Ende</button>`);
+      }else{
+        dot.className="dot pause";status.textContent="Pause";meta.innerHTML=`Pausiert · Block <b>${fDur(ms)}</b><br>Konto <b>${(total>=0?"+":"")+fHM(total)}</b>`;
+        btns.className="btns g2";setH(btns,`<button class="btn btn-green" onclick="resumeWork()">▶ Weiter</button><button class="btn btn-red" onclick="stopWork()">■ Ende</button>`);
+      }
+    }
+  });
+  drawBlocks();
+  const d=new Date();document.getElementById("homeDate").textContent=DF[d.getDay()]+", "+pad(d.getDate())+"."+pad(d.getMonth()+1)+".";
+  const hl=[];
+  if(worked>0||S.live)hl.push(`<div class="item"><div class="ico">⏱</div><div class="info"><div class="t">Arbeitszeit heute</div><div class="s">${S.live?"läuft":"Ist / Soll"}</div></div><div class="val">${fHM(worked)} / ${fHM(soll)}</div></div>`);
+  hl.push(`<div class="item"><div class="ico">⚖️</div><div class="info"><div class="t">Überstundenkonto</div><div class="s">Start ${fHM(S.set.saldoMin||0)} + alle Tage</div></div><div class="val" style="color:${total>0?"var(--green)":total<0?"var(--red)":"inherit"}">${(total>=0?"+":"")+fHM(total)}</div></div>`);
+  const _cw=getWeek(isoWeekKey(new Date()));
+  const bs=DK.reduce((s,k)=>{if(_cw.nothing[k])return s;return s+(_cw.expenses[k]||[]).reduce((a,e)=>a+e.amount,0);},0);
+  if(bs>0)hl.push(`<div class="item"><div class="ico">💶</div><div class="info"><div class="t">Budget</div><div class="s">diese Woche</div></div><div class="val">${euro(bs)} €</div></div>`);
+  hl.push(`<div class="item"><div class="ico">🏖</div><div class="info"><div class="t">Urlaub</div><div class="s">übrig</div></div><div class="val">${urlaubRest()} T</div></div>`);
+  if(S.ex.start&&S.ex.ende)hl.push(`<div class="item"><div class="ico">🎓</div><div class="info"><div class="t">Ausbildung</div><div class="s">${esc(S.ex.beruf||"Fortschritt")}</div></div><div class="val">${ausPct()}%</div></div>`);
+  setH(document.getElementById("homeList"),hl.join("")||`<div class="empty">Noch nichts für heute</div>`);
+  const curAbs=S.abs[tKey()]||"Arbeit";
+  setH(document.getElementById("absChips"),ABS.map(a=>`<button type="button" class="chip ${curAbs===a?"on":""}" onclick="setAbs('${a}')">${a}</button>`).join(""));
+}
+function setAbs(type,dayKey){
+  const k=dayKey||tKey();
+  S.abs[k]=type;
+  // Urlaubstage-Zähler: beim Wechsel auf Urlaub +0.5/1, beim Wegnehmen −
+  save();drawTime();
+  if(calSel===k)calClick(k);
+  if(typeof drawCal==="function"&&document.getElementById("ovMonat")&&document.getElementById("ovMonat").style.display!=="none")drawCal();
+  toast(type+(dayKey?" · "+k:""));
+}
+
+// BUDGET (per ISO week, Mo–So tabs remain)
+function budWeekShift(dir){budWeekOffset+=dir;drawBudget();}
+function activeWeekRead(){return getWeek(currentBudWeekKey());}
+function activeWeekWrite(){return ensureWeek(currentBudWeekKey());}
+function dayBud(k){const w=activeWeekRead();if(w.nothing[k])return 0;return(w.expenses[k]||[]).reduce((s,e)=>s+e.amount,0);}
+function totalBud(){return DK.reduce((s,k)=>s+dayBud(k),0);}
+function weekBudgetAmt(){return activeWeekRead().budget||S.set.budget;}
+function remFrom(i){let b=0;for(let j=0;j<i;j++)b+=dayBud(DK[j]);return weekBudgetAmt()-b;}
+function openFrom(i){return Math.max(1,7-i);}
+function casc(i){return remFrom(i)/openFrom(i);}
+function isViewingCurrentWeek(){return budWeekOffset===0;}
+
+function drawBudget(){
+  const wk=currentBudWeekKey();
+  const w=getWeek(wk);
+  const range=weekKeyToRange(wk);
+  document.getElementById("budWeekLabel").textContent=wk.replace("-W"," · KW ")+(isViewingCurrentWeek()?" · aktuell":"");
+  document.getElementById("budWeekRange").textContent=range.label;
+
+  const spent=totalBud(),budget=weekBudgetAmt(),rem=budget-spent;
+  // Staffelung: aktuelle Woche ab heute; andere Wochen ab Mo
+  const openBase=isViewingCurrentWeek()?TI:0;
+  const open=openFrom(openBase),daily=casc(openBase);
+
+  // Home immer aktuelle KW
+  const cur=getWeek(isoWeekKey(new Date()));
+  const curSpent=DK.reduce((s,k)=>{if(cur.nothing[k])return s;return s+(cur.expenses[k]||[]).reduce((a,e)=>a+e.amount,0);},0);
+  const curBud=cur.budget||S.set.budget;
+  const curRem=curBud-curSpent;
+  document.getElementById("hBud").textContent=euro(curRem)+" €";
+  document.getElementById("hBudT").textContent=euro(curBud);
+  document.getElementById("hBudS").textContent=euro(curSpent);
+  const hp=Math.min(100,curSpent/Math.max(0.01,curBud)*100);
+  const hb=document.getElementById("hBudBar");hb.style.width=hp+"%";hb.className=hp>85?"bad":hp>65?"warn":"";
+
+  document.getElementById("bRem").textContent=euro(rem)+" €";
+  document.getElementById("bTot").textContent=euro(budget);
+  document.getElementById("bSp").textContent=euro(spent);
+  document.getElementById("bSaved").textContent=euro(S.totalSaved||0);
+  document.getElementById("bDaily").textContent=euro(Math.max(0,daily));
+  document.getElementById("bOpen").textContent=open;
+  const bar=document.getElementById("bBar");
+  const pct=spent/Math.max(0.01,budget)*100;
+  bar.style.width=Math.min(100,pct)+"%";
+  bar.className=pct>85?"bad":pct>65?"warn":"";
+
+  const si=document.getElementById("bSaveInfo");
+  const btn=document.getElementById("btnSaveRest");
+  if(si){
+    const curWk=isoWeekKey(new Date());
+    if(w.savedFromRest)si.textContent="✓ Gespart aus dieser Woche: "+euro(w.savedFromRest)+" €";
+    else if(wk===curWk&&rem>0&&weekUsed(w))si.textContent="Rest kannst du jetzt sparen oder er wird am Wochenwechsel automatisch übernommen ("+euro(rem)+" €)";
+    else if(wk<curWk)si.textContent=weekUsed(w)?(rem>0?"Rest noch nicht gespart":"Kein Rest in dieser Woche"):"Woche ohne Einträge";
+    else si.textContent="";
+  }
+  if(btn){
+    if(w.savedFromRest){btn.style.display="block";btn.disabled=true;btn.textContent="Bereits übernommen ("+euro(w.savedFromRest)+" €)";}
+    else if(rem>0&&weekUsed(w)){btn.style.display="block";btn.disabled=false;btn.textContent="Rest ("+euro(rem)+" €) als gespart übernehmen";}
+    else {btn.style.display="none";}
+  }
+
+  const tabs=document.getElementById("bDays");tabs.innerHTML="";
+  const todayIdx=isViewingCurrentWeek()?TI:-1;
+  DK.forEach((k,i)=>{
+    const sp=dayBud(k);const el=document.createElement("div");
+    el.className="dtab"+(i===selB?" on":"")+(i===todayIdx?" today":"")+(sp>0?" hot":"");
+    let v;if(w.nothing[k])v="✓";else if(sp>0)v=Math.round(sp);else if(i>=openBase)v=Math.round(casc(i));else v="0";
+    el.innerHTML=`<span>${k}</span><span class="n">${v}</span>`;
+    el.onclick=()=>{selB=i;drawBudget();};tabs.appendChild(el);
+  });
+
+  const key=DK[selB],sp=dayBud(key);
+  const dayB=selB>=openBase?casc(selB):budget/7,rest=dayB-sp;
+  document.getElementById("bDayH").textContent=key+(selB===todayIdx?" · heute":(isViewingCurrentWeek()&&selB>openBase)?" · staffelnd":"");
+  document.getElementById("bDayB").textContent=euro(Math.max(0,dayB))+" €";
+  const re=document.getElementById("bDayR");re.textContent=euro(rest)+" €";re.style.color=rest<0?"var(--red)":"var(--green)";
+  document.getElementById("bNoth").checked=!!w.nothing[key];
+
+  const list=document.getElementById("bList"),items=w.expenses[key]||[];
+  if(w.nothing[key]&&!items.length)list.innerHTML=`<div class="empty">Nichts ausgegeben ✓</div>`;
+  else if(!items.length)list.innerHTML=`<div class="empty">Keine Ausgaben</div>`;
+  else{
+    const note=w.nothing[key]?`<div class="empty" style="padding:6px 0;color:var(--muted)">„Nichts ausgegeben“ aktiv – Beträge zählen nicht mit</div>`:"";
+    list.innerHTML=note+items.map((e,i)=>`<div class="item" style="${w.nothing[key]?"opacity:.45":""}"><div class="ico">${CI[e.cat]||"📦"}</div><div class="info"><div class="t">${esc(e.cat)}${e.note?" · "+esc(e.note):""}</div><div class="s">${key}</div></div><div class="val" style="color:var(--red)">−${euro(e.amount)}</div><button class="xbtn" onclick="delExp('${key}',${i})">✕</button></div>`).join("");
+  }
+}
+function bq(v){const i=document.getElementById("bAmt");i.value=((num(i.value)||0)+v).toFixed(2);}
+function addExp(){
+  const a=num(document.getElementById("bAmt").value);if(!a||a<=0){toast("Betrag eingeben");return;}
+  if(a>100000){toast("Betrag zu groß");return;}
+  const note=document.getElementById("bNote").value.trim(),cat=document.getElementById("bCat").value,key=DK[selB];
+  const w=activeWeekWrite();
+  w.expenses[key].push({amount:Math.round(a*100)/100,note,cat});w.nothing[key]=0;
+  document.getElementById("bAmt").value="";document.getElementById("bNote").value="";document.getElementById("bNoth").checked=false;
+  adjustSaved(currentBudWeekKey());save();drawBudget();drawTime();toast("Gespeichert");
+}
+function delExp(k,i){
+  const w=activeWeekWrite();
+  if(!w.expenses[k]||!w.expenses[k][i])return;
+  w.expenses[k].splice(i,1);adjustSaved(currentBudWeekKey());save();drawBudget();drawTime();toast("Gelöscht");
+}
+function weekSpent(w){return DK.reduce((s,k)=>(w.nothing&&w.nothing[k])?s:s+((w.expenses&&w.expenses[k])||[]).reduce((a,e)=>a+(+e.amount||0),0),0);}
+function weekUsed(w){return DK.some(k=>(w.nothing&&w.nothing[k])||((w.expenses&&w.expenses[k])||[]).length>0);}
+function weekNum(wk){const p=String(wk).split("-W");return (+p[0])*100+(+p[1]||0);}
+/** Passt totalSaved an, wenn Rest schon gebucht war und Ausgaben sich ändern (auch aktuelle KW). */
+function adjustSaved(wk){
+  const w=S.weeks[wk];if(!w)return;
+  // Nur nachjustieren, wenn schon einmal Rest gebucht wurde
+  if(!(w.savedFromRest>0)&&!w.closed)return;
+  const rest=Math.max(0,Math.round(((w.budget||S.set.budget)-weekSpent(w))*100)/100);
+  const prev=w.savedFromRest||0;
+  if(rest===prev)return;
+  S.totalSaved=Math.round(((S.totalSaved||0)+rest-prev)*100)/100;
+  if(S.totalSaved<0)S.totalSaved=0;
+  w.savedFromRest=rest;
+}
+function closeWeeks(){
+  const cur=weekNum(isoWeekKey(new Date()));let ch=false;
+  Object.keys(S.weeks).forEach(wk=>{
+    if(weekNum(wk)>=cur)return;
+    const w=S.weeks[wk];if(!w||w.closed)return;
+    if(weekUsed(w)){
+      const rest=Math.max(0,Math.round(((w.budget||S.set.budget)-weekSpent(w))*100)/100);
+      const prev=w.savedFromRest||0;
+      if(rest!==prev){
+        S.totalSaved=Math.round(((S.totalSaved||0)+rest-prev)*100)/100;
+        if(S.totalSaved<0)S.totalSaved=0;
+        w.savedFromRest=rest;
+      }
+    }
+    w.closed=true;ch=true;
+  });
+  if(ch)save();
+  return ch;
+}
+function saveRestAsSaved(){
+  const spent=totalBud(),budget=weekBudgetAmt(),rem=Math.max(0,Math.round((budget-spent)*100)/100);
+  if(rem<=0){toast("Kein Rest übrig");return;}
+  if(!weekUsed(activeWeekRead())){toast("Erst Ausgaben oder „Nichts ausgegeben“ eintragen");return;}
+  const w=activeWeekWrite(),wk=currentBudWeekKey();
+  const prev=w.savedFromRest||0;
+  if(prev===rem){toast("Bereits so gebucht");return;}
+  S.totalSaved=Math.round(((S.totalSaved||0)+rem-prev)*100)/100;
+  if(S.totalSaved<0)S.totalSaved=0;
+  w.savedFromRest=rem;
+  // Vergangene Wochen gleich abschließen
+  if(weekNum(wk)<weekNum(isoWeekKey(new Date())))w.closed=true;
+  save();drawBudget();
+  if(typeof drawPlan==="function")try{drawPlan();}catch(e){}
+  toast(euro(rem)+" € gespart");
+}
+document.getElementById("bNoth").addEventListener("change",function(){
+  const w=activeWeekWrite(),key=DK[selB];
+  if(this.checked){
+    // Ausgaben dieses Tages werden ausgeblendet (nicht gelöscht), nichts-Flag setzt Ist auf 0
+    w.nothing[key]=1;
+  }else{
+    w.nothing[key]=0;
+  }
+  adjustSaved(currentBudWeekKey());save();drawBudget();drawTime();
+});
+
+// OVERVIEW
+function setOverview(mode){
+  ovMode=mode;
+  document.getElementById("ovWoche").style.display=mode==="woche"?"":"none";
+  document.getElementById("ovMonat").style.display=mode==="monat"?"":"none";
+  document.getElementById("ovStats").style.display=mode==="stats"?"":"none";
+  document.getElementById("tabW").classList.toggle("on",mode==="woche");
+  document.getElementById("tabM").classList.toggle("on",mode==="monat");
+  document.getElementById("tabS").classList.toggle("on",mode==="stats");
+  if(mode==="woche")drawWoche();
+  if(mode==="monat")drawCal();
+  if(mode==="stats")drawStats();
+}
+function drawWoche(){
+  const mon=monday(new Date());let ww=0,ws=0,html="";
+  for(let i=0;i<7;i++){
+    const d=new Date(mon);d.setDate(mon.getDate()+i);const k=dKey(d),isT=k===tKey();
+    let w=dayMin(k);w+=liveMinFor(k);
+    const ds=sollForDate(d);ww+=w;ws+=sollUpTo(d);
+    const pct=ds>0?Math.min(100,w/ds*100):(w>0?100:0);
+    html+=`<div class="wrow"><div class="wd">${DS[d.getDay()]}</div><div class="wb"><i class="${w>ds&&ds>0?"over":""}" style="width:${pct}%"></i></div><div class="wv">${w>0?fHM(w):"–"}</div></div>`;
+  }
+  document.getElementById("wBars").innerHTML=html;
+  const diff=ww-ws;const el=document.getElementById("wSaldo");el.textContent=(diff>=0?"+":"")+fHM(diff);el.style.color=diff>0?"var(--green)":diff<0?"var(--red)":"";
+  const total=totalSaldoMin();
+  const ts=document.getElementById("wTotal");ts.textContent=(total>=0?"+":"")+fHM(total);ts.style.color=total>0?"var(--green)":total<0?"var(--red)":"";
+  const cur=getWeek(isoWeekKey(new Date()));
+  const spent=DK.reduce((s,k)=>{if(cur.nothing[k])return s;return s+(cur.expenses[k]||[]).reduce((a,e)=>a+e.amount,0);},0);
+  const cb=cur.budget||S.set.budget;const rem=cb-spent;
+  document.getElementById("wBudS").textContent=euro(spent)+" €";document.getElementById("wBudL").textContent=euro(rem)+" €";
+  document.getElementById("wBudBar").style.width=Math.min(100,spent/Math.max(0.01,cb)*100)+"%";
+}
+
+function drawCal(){
+  const months=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+  document.getElementById("calTitle").textContent=months[calM]+" "+calY;
+  document.getElementById("calHead").innerHTML=["Mo","Di","Mi","Do","Fr","Sa","So"].map(x=>`<div class="cal-hd">${x}</div>`).join("");
+  const first=new Date(calY,calM,1);let startIdx=first.getDay();startIdx=startIdx===0?6:startIdx-1;
+  const daysIn=new Date(calY,calM+1,0).getDate();
+  const hol=holidaysFor(calY,S.set.land||"BY");
+  let html="";
+  for(let i=0;i<startIdx;i++)html+=`<div class="cal-day mute"></div>`;
+  for(let day=1;day<=daysIn;day++){
+    const d=new Date(calY,calM,day);const k=dKey(d);
+    const isToday=k===tKey();const worked=dayMin(k);const abs=S.abs[k];const isHol=!!hol[k];
+    let cls="cal-day";
+    if(isToday)cls+=" today";
+    if(isHol)cls+=" hol";
+    else if(abs==="Berufsschule")cls+=" school";
+    else if(abs==="Urlaub"||abs==="Frei")cls+=" vac";
+    else if(abs==="Krankheit")cls+=" sick";
+    else if(worked>0||abs==="Arbeit"||abs==="Homeoffice")cls+=" work";
+    let dot="";
+    if(worked>0){const soll=sollForDate(d);dot=`<span class="dotc ${worked>=soll?"g":"r"}"></span>`;}
+    html+=`<div class="${cls}" onclick="calClick('${k}')">${day}${dot}</div>`;
+  }
+  document.getElementById("calBody").innerHTML=html;
+  document.getElementById("calDetail").innerHTML=`<div class="empty">Tag antippen für Details</div>`;
+}
+function calPrev(){calM--;if(calM<0){calM=11;calY--;}drawCal();}
+function calNext(){calM++;if(calM>11){calM=0;calY++;}drawCal();}
+function calClick(k){
+  calSel=k;
+  const d=new Date(k+"T12:00:00");
+  let worked=dayMin(k);worked+=liveMinFor(k);
+  const soll=sollForDate(d),diff=worked-soll;
+  const abs=S.abs[k]||"Arbeit";const hol=holidaysFor(d.getFullYear(),S.set.land||"BY")[k];
+  const blocks=(S.time[k]&&S.time[k].blocks)||[];
+  let html=`<div class="item"><div class="ico">📅</div><div class="info"><div class="t">${DF[d.getDay()]}, ${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}</div><div class="s">${hol?"Feiertag":esc(abs)}</div></div><div class="val">${fHM(worked)}</div></div>`;
+  html+=`<div class="item"><div class="ico">🎯</div><div class="info"><div class="t">Soll · Tages-Saldo</div><div class="s">Ist − Soll</div></div><div class="val">${fHM(soll)} · <span style="color:${diff>0?"var(--green)":diff<0?"var(--red)":"inherit"}">${(diff>=0?"+":"")+fHM(diff)}</span></div></div>`;
+  // Einfach Abwesenheit setzen
+  html+=`<div style="margin:10px 0 6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:650">＋ Tag markieren</div>`;
+  html+=`<div class="chips" style="margin-bottom:10px">`+ABS.map(a=>
+    `<button type="button" class="chip ${!hol&&abs===a?"on":""}" onclick="setAbs('${a}','${k}')">${a}</button>`
+  ).join("")+`</div>`;
+  if(hol)html+=`<div class="hero-meta" style="margin-bottom:8px">Gesetzlicher Feiertag (${esc(S.set.land||"BY")}) – Soll ist 0.</div>`;
+  blocks.forEach((b,i)=>{html+=`<div class="item"><div class="ico">⏱</div><div class="info"><div class="t">${esc(b.start)} – ${esc(b.end)}</div><div class="s">${b.pauseMin||0} min Pause</div></div><div class="val">${fHM(bMin(b))}</div><button type="button" class="xbtn" data-del-day="${k}" data-del-i="${i}" aria-label="Löschen">✕</button></div>`;});
+  html+=`<button type="button" class="btn btn-soft" style="width:100%;margin-top:8px" onclick="zSet('${k}');go('zeit')">＋ Arbeitszeit für diesen Tag eintragen</button>`;
+  document.getElementById("calDetail").innerHTML=html;
+  document.getElementById("calDetail").querySelectorAll("[data-del-day]").forEach(btn=>{
+    btn.addEventListener("click",function(e){
+      e.preventDefault();e.stopPropagation();
+      delBlockAsk(this.getAttribute("data-del-day"),+this.getAttribute("data-del-i"),e);
+    },{passive:false});
+  });
+}
+
+function drawStats(){
+  const mon=monday(new Date());let wWork=0,wSoll=0,wDays=0;
+  for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const k=dKey(d);let w=dayMin(k);w+=liveMinFor(k);const s=sollUpTo(d);wWork+=w;wSoll+=s;if(w>0)wDays++;}
+  document.getElementById("stWeek").innerHTML=`
+    <div class="stat-card"><div class="sl">Ist</div><div class="sv">${fHM(wWork)}</div></div>
+    <div class="stat-card"><div class="sl">Soll bis heute</div><div class="sv">${fHM(wSoll)}</div></div>
+    <div class="stat-card"><div class="sl">Saldo</div><div class="sv" style="color:${wWork-wSoll>=0?"var(--green)":"var(--red)"}">${(wWork-wSoll>=0?"+":"")+fHM(wWork-wSoll)}</div></div>
+    <div class="stat-card"><div class="sl">Tage mit Arbeit</div><div class="sv">${wDays}</div></div>`;
+  // month
+  let mWork=0,mSoll=0,mDays=0;const y=new Date().getFullYear(),m=new Date().getMonth(),dim=new Date(y,m+1,0).getDate();
+  for(let day=1;day<=dim;day++){const d=new Date(y,m,day);const k=dKey(d);const w=dayMin(k)+liveMinFor(k);const s=sollUpTo(d);mWork+=w;mSoll+=s;if(w>0)mDays++;}
+  document.getElementById("stMonth").innerHTML=`
+    <div class="stat-card"><div class="sl">Ist</div><div class="sv">${fHM(mWork)}</div></div>
+    <div class="stat-card"><div class="sl">Soll bis heute</div><div class="sv">${fHM(mSoll)}</div></div>
+    <div class="stat-card"><div class="sl">Saldo</div><div class="sv" style="color:${mWork-mSoll>=0?"var(--green)":"var(--red)"}">${(mWork-mSoll>=0?"+":"")+fHM(mWork-mSoll)}</div></div>
+    <div class="stat-card"><div class="sl">Arbeitstage</div><div class="sv">${mDays}</div></div>`;
+  let days=0,maxD=0;
+  Object.keys(S.time).forEach(k=>{const w=dayMin(k);if(w>0)days++;if(w>maxD)maxD=w;});
+  const all=totalSaldoMin();
+  document.getElementById("stAll").innerHTML=`
+    <div class="stat-card"><div class="sl">Überstundenkonto</div><div class="sv" style="color:${all>=0?"var(--green)":"var(--red)"}">${(all>=0?"+":"")+fHM(all)}</div></div>
+    <div class="stat-card"><div class="sl">Erfasste Tage</div><div class="sv">${days}</div></div>
+    <div class="stat-card"><div class="sl">Längster Tag</div><div class="sv">${fHM(maxD)}</div></div>
+    <div class="stat-card"><div class="sl">Gespart gesamt</div><div class="sv">${euro(S.totalSaved||0)} €</div></div>`;
+}
+
+// EXTRA / SETTINGS
+function urlaubGenommen(){const y=String(new Date().getFullYear());return Object.keys(S.abs).filter(k=>k.startsWith(y)&&S.abs[k]==="Urlaub").length;}
+function urlaubRest(){return (S.ex.uAn||0)-urlaubGenommen();}
+function ausPct(){if(!S.ex.start||!S.ex.ende)return 0;const a=new Date(S.ex.start).getTime(),b=new Date(S.ex.ende).getTime(),n=Date.now();if(b<=a)return 0;return Math.min(100,Math.max(0,Math.round((n-a)/(b-a)*100)));}
+function drawEx(){
+  document.getElementById("aBeruf").value=S.ex.beruf||"";document.getElementById("aStart").value=S.ex.start||"";document.getElementById("aEnde").value=S.ex.ende||"";
+  document.getElementById("uAn").value=S.ex.uAn??30;
+  const pct=ausPct(),box=document.getElementById("aProg");
+  if(S.ex.start&&S.ex.ende){const days=Math.max(0,Math.ceil((new Date(S.ex.ende)-Date.now())/864e5));box.innerHTML=`<div class="bar"><i style="width:${pct}%;background:var(--purple)"></i></div><div style="font-size:12px;margin-top:6px;color:var(--muted)">${pct}% · noch ${days} Tage</div>`;}
+  else box.innerHTML="";
+  const _yr=String(new Date().getFullYear()),_mk=Object.keys(S.abs).filter(k=>k.startsWith(_yr)&&S.abs[k]==="Urlaub").length;
+  document.getElementById("uRest").textContent=`Noch ${urlaubRest()} von ${S.ex.uAn||0} Urlaubstagen übrig (Urlaub im Kalender markieren)`;
+}
+function saveEx(){S.ex.beruf=document.getElementById("aBeruf").value;S.ex.start=document.getElementById("aStart").value;S.ex.ende=document.getElementById("aEnde").value;S.ex.uAn=parseFloat(document.getElementById("uAn").value)||0;save();drawEx();drawTime();toast("Gespeichert");}
+function loadSet(){
+  document.getElementById("sPause").value=S.set.pause;document.getElementById("sSaldo").value=fHM(S.set.saldoMin);document.getElementById("sBud").value=S.set.budget;
+  document.getElementById("sLand").value=S.set.land||"BY";document.getElementById("mPause").value=S.set.pause;
+  
+  // mDate an aktuell angezeigten Tag halten (nicht immer auf heute zurücksetzen)
+  const md=document.getElementById("mDate");if(md)md.value=zDay||tKey();
+  const zin=document.getElementById("zDayIn");if(zin)zin.value=zDay||tKey();
+  // soll days
+  const box=document.getElementById("sollDays");
+  box.innerHTML=`<div class="gh">Stunden pro Tag · <span id="sollSum"></span></div>`+DK.map((k,i)=>`<div class="gr"><div class="gl">${k}</div><input type="number" min="0" max="12" step="0.5" value="${S.set.soll[i]}" data-i="${i}" onchange="setSollDay(this)" style="width:70px"></div>`).join("");;sollSumUpd();
+}
+function sollSumUpd(){const e=document.getElementById("sollSum");if(e)e.textContent="Woche: "+(S.set.soll.reduce((a,b)=>a+b,0))+" h";}
+function setSollDay(el){const i=+el.dataset.i;S.set.soll[i]=parseFloat(el.value)||0;sollSumUpd();save();drawTime();toast(DK[i]+": "+el.value+" h");}
+function saveSet(){
+  S.set.pause=parseInt(document.getElementById("sPause").value)||0;S.set.saldoMin=pHM(document.getElementById("sSaldo").value);
+  S.set.budget=num(document.getElementById("sBud").value)||100;S.set.land=document.getElementById("sLand").value;
+  // Nur aktuelle (offene) KW anpassen – abgeschlossene Wochen behalten ihr Budget
+  const curWk=isoWeekKey(new Date());
+  const w=ensureWeek(curWk);
+  if(!w.closed){w.budget=S.set.budget;adjustSaved(curWk);}
+  document.getElementById("mPause").value=S.set.pause;
+  save();drawAll();toast("Gespeichert");
+}
+function exportJSON(){const b=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="wochenplan-backup.json";a.click();toast("JSON Export");}
+function importJSON(ev){
+  const file=ev.target.files&&ev.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    let data;
+    try{data=JSON.parse(reader.result);if(!data||typeof data!=="object"||Array.isArray(data))throw new Error("Ungültig");}
+    catch(e){toast("Import fehlgeschlagen");ev.target.value="";return;}
+    ev.target.value="";
+    dlg("Backup einspielen? Die aktuellen Daten werden überschrieben.","Einspielen",()=>{
+      try{
+        S=data;
+        if(S.bud&&!(S.weeks&&Object.keys(S.weeks).length)){
+          const wk=isoWeekKey(new Date());S.weeks=S.weeks||{};
+          S.weeks[wk]={budget:(S.set&&S.set.budget)||54,expenses:S.bud,nothing:S.noth||{},savedFromRest:0};
+          delete S.bud;delete S.noth;
+        }
+        norm(S);
+        S.live=null;budWeekOffset=0;
+        save();stopTick();closeWeeks();drawAll();loadSet();drawEx();drawPlan();
+        toast("Import erfolgreich");
+      }catch(e){toast("Import fehlgeschlagen");console.error(e);}
+    });
+  };
+  reader.readAsText(file);
+}
+function exportCSV(){
+  let csv="Datum;Von;Bis;PauseMin;NettoMin;Notiz\n";
+  Object.keys(S.time).sort().forEach(k=>{(S.time[k].blocks||[]).forEach(b=>{csv+=`${k};${b.start};${b.end};${b.pauseMin||0};${bMin(b)};"${(b.note||"").replace(/"/g,"'")}"\n`;});});
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="arbeitszeiten.csv";a.click();toast("CSV Export");
+}
+function doReset(){dlg("Wirklich ALLE Daten löschen? Das kann nicht rückgängig gemacht werden (vorher Backup exportieren!).","Alles löschen",()=>{S=def();save();stopTick();drawAll();loadSet();drawEx();drawPlan();toast("Reset");});}
+function calcEnd(){const start=document.getElementById("cStart").value,sollH=parseFloat(document.getElementById("cSoll").value),pause=parseInt(document.getElementById("cPause").value)||0;if(!start)return;const[h,m]=start.split(":").map(Number);const end=h*60+m+sollH*60+pause;document.getElementById("cEnd").textContent=pad(Math.floor(end/60)%24)+":"+pad(end%60)+" Uhr";document.getElementById("cEndS").textContent=`Beginn ${start} · ${sollH} h · ${pause} min Pause`;}
+function calcRem(){const sollH=parseFloat(document.getElementById("rSoll").value),done=pHM(document.getElementById("rDone").value),soll=sollH*60,rem=soll-done;document.getElementById("rTime").textContent=(rem>=0?"":"−")+fHM(Math.abs(rem));document.getElementById("rSub").textContent=`Soll ${fHM(soll)} · Absolviert ${fHM(done)} · ${(soll?done/soll*100:0).toFixed(0)} %`;}
+
+// ================= PLAN: Sparziel · Monatsplan · feste Ausgaben · Brutto-Netto =================
+const fixM=()=>S.fix.reduce((a,f)=>a+(f.p==="w"?f.a*52/12:f.a),0);
+function est(x){x=Math.floor(x);if(x<=12348)return 0;if(x<=17799){const y=(x-12348)/10000;return Math.floor((914.51*y+1400)*y);}if(x<=69878){const z=(x-17799)/10000;return Math.floor((173.1*z+2397)*z+1034.87);}if(x<=277825)return Math.floor(0.42*x-11135.63);return Math.floor(0.45*x-19470.38);}
+function bnVals(g,k,a,z,cls,kids){
+  const r2=v=>Math.round(v*100)/100;kids=Math.max(0,Math.min(5,kids|0));
+  let pvr=0.018;if(kids===0){if(a==="23")pvr+=0.006;}else pvr-=0.0025*(kids-1);
+  const c=(cls===2&&kids===0)?1:cls;
+  const rv=r2(Math.min(g,8450)*0.093),av=r2(Math.min(g,8450)*0.013),kv=r2(Math.min(g,5812.5)*(0.073+z/200)),pv=r2(Math.min(g,5812.5)*pvr);
+  const ent=c===2?4260+240*Math.max(0,kids-1):0,zve=Math.max(0,g*12-1230-(c===3?72:36)-ent-(rv+av+kv+pv)*12);
+  const tax=x=>c===3?2*est(x/2):est(x);
+  const e0=tax(zve),eK=tax(Math.max(0,zve-(c===3?9756:4878)*kids)),lst=r2(e0/12),fg=c===3?40700:20350;
+  const soli=eK>fg?r2(Math.min(0.055*eK,0.119*(eK-fg))/12):0,kist=k?r2(eK*0.08/12):0;
+  return {rv,av,kv,pv,lst,soli,kist,fb:c!==cls,net:r2(g-rv-av-kv-pv-lst-soli-kist)};
+}
+function bnIn(){return {g:num(document.getElementById("bg").value),z:num(document.getElementById("bz").value),k:!!document.getElementById("bk").checked,a:document.getElementById("ba").value,c:+document.getElementById("bc").value,kids:+document.getElementById("bd").value};}
+function bnCalc(){
+  const bg=document.getElementById("bg");if(!bg)return;
+  const x=bnIn();if(!(x.g>0)||isNaN(x.z)){const r0=document.getElementById("bnr");if(r0)r0.innerHTML='<div class="hero-meta">Brutto eingeben, dann wird gerechnet.</div>';return;}S.bn=x;save();
+  const v=bnVals(x.g,x.k,x.a,x.z,x.c,x.kids),row=(l,y)=>`<div class="nrow"><span>${l}</span><span>− ${euro(y)} €</span></div>`;
+  document.getElementById("bnr").innerHTML=(v.fb?'<div class="hero-meta" style="color:var(--red)">Klasse II braucht mind. 1 Kind – gerechnet wie Klasse I.</div>':"")+
+    row("Rentenversicherung",v.rv)+row("Krankenversicherung",v.kv)+row("Pflegeversicherung",v.pv)+row("Arbeitslosenversicherung",v.av)+row("Lohnsteuer",v.lst)+row("Soli",v.soli)+(x.k?row("Kirchensteuer",v.kist):"")+
+    `<div class="nrow" style="font-size:15px"><b>Netto pro Monat</b><b style="color:var(--green)">${euro(v.net)} €</b></div><div class="hero-meta">≈ ${euro(v.net*12)} € pro Jahr · Näherung 2026, das echte Netto ist eher ein paar Euro niedriger. Kindergeld ist nicht enthalten.</div>`;
+}
+function useNet(){const x=bnIn();if(!(x.g>0)||isNaN(x.z)){toast("Brutto eingeben");return;}S.bn=x;S.inc=bnVals(x.g,x.k,x.a,x.z,x.c,x.kids).net;save();drawPlan();toast("Netto übernommen");}
+function planSet(k,v){const x=num(v);S[k]=(isNaN(x)||x<0)?0:x;save();drawPlan();}
+function addFix(){
+  const n=document.getElementById("fn").value.trim(),a=num(document.getElementById("fa").value);
+  if(!n||!(a>0)){toast("Name und Betrag eingeben");return;}
+  S.fix.push({n,a,p:document.getElementById("fp").value});save();drawPlan();toast("Gespeichert");
+}
+function delFixAsk(j){const f=S.fix[j];if(!f)return;dlg("„"+esc(f.n)+"“ wirklich löschen?","Löschen",()=>{S.fix.splice(j,1);save();drawPlan();});}
+function drawPlan(){
+  const box=document.getElementById("planBody");if(!box)return;
+  const saved=S.totalSaved||0,gp=S.goal>0?Math.min(100,saved/S.goal*100):0;
+  const tg=S.set.budget*52/12,fm=fixM(),pot=S.inc-fm-tg-S.puf,rm=Math.max(0,S.goal-saved);
+  const row=(l,v,c)=>`<div class="gr"><div class="gl">${l}</div><div class="val"${c?` style="color:${c}"`:""}>${v}</div></div>`;
+  const inp=(l,k,v)=>`<div class="gr"><div class="gl">${l}</div><input type="number" inputmode="decimal" min="0" step="0.01" value="${v||""}" placeholder="0" onchange="planSet('${k}',this.value)"></div>`;
+  let h=`<div class="sec"><div class="sec-h"><h2>Sparziel</h2></div><div class="grp" style="padding:14px 14px 4px">`+
+    (S.goal>0?`<div style="font-size:14px">Gespart <b>${euro(saved)} €</b> von <b>${euro(S.goal)} €</b>${saved>=S.goal?" 🎉":""}</div><div class="bar"><i style="width:${gp}%;background:var(--green)"></i></div>`:`<div class="hero-meta">Noch kein Ziel gesetzt. Gespart bisher: <b>${euro(saved)} €</b></div>`)+
+    `<div style="margin:0 -14px">${inp("Ziel (€)","goal",S.goal)}</div></div></div>`;
+  h+=`<div class="sec"><div class="sec-h"><h2>Monatsplan</h2></div><div class="grp">`+
+    inp("Netto-Einnahmen / Monat","inc",S.inc)+
+    row("Feste Kosten","− "+euro(fm)+" €")+
+    row("Taschengeld ("+euro(S.set.budget)+" € × 4,33 Wochen)","− "+euro(tg)+" €")+
+    inp("Puffer / Monat (€)","puf",S.puf)+
+    (S.inc>0?row("<b>Sparpotenzial / Monat</b>","<b>"+euro(pot)+" €</b>",pot<0?"var(--red)":"var(--green)"):"")+
+    `</div>`+(S.inc>0?`<div class="hero-meta" style="margin-top:6px">≈ ${euro(pot*12)} € pro Jahr${pot<0?" · Achtung: Ausgaben höher als Einnahmen!":""}${S.goal>0&&pot>0?`<br>Hinweis: Das Sparziel zählt nur Reste aus dem Wochenbudget. Das Sparpotenzial wird nicht automatisch gebucht.`:""}</div>`:`<div class="hero-meta" style="margin-top:6px">Trag dein Netto ein (oder berechne es unten), dann siehst du, was monatlich zum Sparen übrig bleibt.</div>`)+`</div>`;
+  h+=`<div class="sec"><div class="sec-h"><h2>Feste Ausgaben</h2><span style="font-size:11px;color:var(--muted)">${euro(fm)} € / Monat</span></div><div class="hero-meta" style="margin-bottom:8px">Werden am 1. abgebucht und zählen nicht zum Wochenbudget.</div><div class="list">`+
+    (S.fix.length?S.fix.map((f,j)=>`<div class="item"><div class="ico">📌</div><div class="info"><div class="t">${esc(f.n)}</div><div class="s">${f.p==="w"?"pro Woche":"pro Monat"}</div></div><div class="val">${euro(f.a)} €</div><button class="xbtn" onclick="delFixAsk(${j})">✕</button></div>`).join(""):`<div class="empty">Noch keine festen Ausgaben</div>`)+
+    `</div><div class="panel" style="margin-top:10px"><div class="row2"><div class="fld"><label>Name</label><input type="text" id="fn" placeholder="z. B. Handyvertrag"></div><div class="fld"><label>Betrag €</label><input type="number" id="fa" inputmode="decimal" step="0.01" min="0"></div></div><div class="fld"><label>Rhythmus</label><select id="fp"><option value="m">pro Monat</option><option value="w">pro Woche</option></select></div><button class="btn btn-blue" style="width:100%" onclick="addFix()">＋ Hinzufügen</button></div></div>`;
+  const b=S.bn;
+  h+=`<div class="sec"><div class="sec-h"><h2>Brutto-Netto-Rechner</h2></div><div class="panel"><div class="hero-meta" style="margin-bottom:10px">Näherung 2026 für Bayern · Standard: Klasse I, ohne Kinder · Klasse V/VI fehlen</div>`+
+    `<div class="fld"><label>Brutto pro Monat (€)</label><input id="bg" type="number" inputmode="decimal" value="${b.g||""}" placeholder="0" oninput="bnCalc()"></div>`+
+    `<div class="fld"><label>Alter</label><select id="ba" onchange="bnCalc()">${[["u18","unter 18"],["18","18 – 22"],["23","23 oder älter"]].map(o=>`<option value="${o[0]}" ${b.a===o[0]?"selected":""}>${o[1]}</option>`).join("")}</select></div>`+
+    `<div class="fld"><label>Steuerklasse</label><select id="bc" onchange="bnCalc()">${[[1,"I – ledig (Standard)"],[2,"II – alleinerziehend"],[3,"III – verheiratet, Partner verdient wenig/nichts"],[4,"IV – verheiratet, beide ähnlich"]].map(o=>`<option value="${o[0]}" ${b.c===o[0]?"selected":""}>${o[1]}</option>`).join("")}</select></div>`+
+    `<div class="fld"><label>Kinder</label><select id="bd" onchange="bnCalc()">${[0,1,2,3,4,5].map(n=>`<option value="${n}" ${b.kids===n?"selected":""}>${n===0?"keine":n}</option>`).join("")}</select></div>`+
+    `<div class="fld"><label>Zusatzbeitrag Krankenkasse (%)</label><input id="bz" type="number" step="0.1" inputmode="decimal" value="${b.z}" oninput="bnCalc()"></div>`+
+    `<label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;cursor:pointer"><input type="checkbox" id="bk" ${b.k?"checked":""} onchange="bnCalc()" style="width:17px;height:17px;accent-color:var(--teal)"> Kirchensteuer (8 % in Bayern)</label>`+
+    `<div id="bnr"></div><button class="btn btn-teal" style="width:100%;margin-top:12px" onclick="useNet()">Als Netto-Einnahme übernehmen</button></div></div>`;
+  box.innerHTML=h;
+  bnCalc();
+}
+
+function go(name){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.getElementById("v-"+name).classList.add("active");
+  document.querySelectorAll(".ni").forEach(n=>n.classList.toggle("on",n.dataset.v===name));
+  if(name==="woche")setOverview(ovMode);
+  if(name==="mehr"){loadSet();drawEx();calcEnd();calcRem();}
+  if(name==="budget")drawBudget();
+  if(name==="plan")drawPlan();
+  if(name==="zeit"||name==="home")drawTime();
+}
+let staleOpen=false;
+/** Timer läuft seit einem früheren Tag: nachfragen statt stillschweigend bis 23:59 zu buchen. */
+function sealStaleLive(){
+  if(!S.live||S.live.keepOver||staleOpen)return false;
+  const st=new Date(S.live.startTs),startDay=dKey(st);
+  if(startDay===tKey())return false;
+  staleOpen=true;
+  const hhmm=d=>pad(d.getHours())+":"+pad(d.getMinutes());
+  const soll=sollForDate(st);
+  const eod=new Date(st);eod.setHours(23,59,0,0);
+  let defEnd=S.live.status==="paused"?new Date(S.live.pausedAt):new Date(st.getTime()+(soll>0?soll+(S.set.pause||0):480)*60000);
+  if(defEnd>eod)defEnd=eod;
+  const pm=S.live.pausedTotalMs>0?Math.round(S.live.pausedTotalMs/60000):(S.set.pause||0);
+  const r=document.getElementById("dlgRoot");
+  r.innerHTML=`<div class="ov"><div class="dlg"><p>Der Timer von <b>${esc(startDay)} ${hhmm(st)}</b> läuft noch. Wann war Feierabend?</p><div class="row2"><div class="fld"><label>Ende (Uhrzeit)</label><input type="time" id="staleEnd" value="${hhmm(defEnd)}"></div><div class="fld"><label>Pause (Min.)</label><input type="number" id="stalePause" min="0" step="5" value="${pm}"></div></div><div class="btns g3"><button class="btn btn-soft" id="staleDrop">Verwerfen</button><button class="btn btn-soft" id="dlgC">Läuft weiter</button><button class="btn btn-green" id="dlgO">Speichern</button></div></div></div>`;
+  const close=()=>{r.innerHTML="";staleOpen=false;};
+  document.getElementById("dlgC").onclick=()=>{S.live.keepOver=true;save();close();toast("Timer läuft weiter");};
+  document.getElementById("staleDrop").onclick=()=>{S.live=null;save();stopTick();close();drawAll();toast("Timer verworfen");};
+  document.getElementById("dlgO").onclick=()=>{
+    const v=(document.getElementById("staleEnd").value||"").split(":"),pause=Math.max(0,parseInt(document.getElementById("stalePause").value,10)||0);
+    if(v.length<2||isNaN(+v[0])||isNaN(+v[1])){toast("Uhrzeit angeben");return;}
+    const en=new Date(st);en.setHours(+v[0],+v[1],0,0);
+    if(en<=st)en.setDate(en.getDate()+1); // Ende nach Mitternacht
+    const min=Math.floor((en-st)/60000)-pause;
+    if(min<1){toast("Netto-Zeit muss über 0 liegen");return;}
+    ens(startDay).blocks.push({start:hhmm(st),end:hhmm(en),pauseMin:pause,note:"Nachträglich beendet",source:"live",dur:min});
+    S.live=null;save();stopTick();close();zDay=startDay;drawAll();toast("Gespeichert ("+fHM(min)+")");
+  };
+  return true;
+}
+function drawAll(){closeWeeks();sealStaleLive();drawTime();drawBudget();}
+loadSet();drawAll();
+if(window.__loadNote)toast(window.__loadNote);
+if(S.live&&S.live.status==="running")startTick();
+let lastDay=tKey();
+function dayRoll(){
+  const nt=tKey();if(nt===lastDay)return;
+  lastDay=nt;const d=new Date().getDay();TI=d===0?6:d-1;selB=TI;zDay=nt;budWeekOffset=0;
+  loadSet();drawAll();
+  if(S.live&&S.live.status==="running")startTick();
+}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){dayRoll();drawTime();}});
+setInterval(dayRoll,60000);
+["gesturestart","gesturechange","gestureend"].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault()));
+let _lt=0;document.addEventListener("touchend",e=>{const n=Date.now();if(n-_lt<300)e.preventDefault();_lt=n;},{passive:false});
+if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").then(r=>r.update()).catch(()=>{});
+</script>
+</body>
+</html>
